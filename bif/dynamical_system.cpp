@@ -32,4 +32,11 @@ dynamical_system::dynamical_system(nlohmann::json json) {
       std::vector<Eigen::MatrixXd>(period, Eigen::MatrixXd::Zero(xdim, xdim));
   dTldxdx =
       std::vector<Eigen::MatrixXd>(xdim, Eigen::MatrixXd::Zero(xdim, xdim));
+
+  frwd_prod = std::vector<Eigen::MatrixXd>(
+      period, Eigen::MatrixXd::Identity(xdim, xdim));
+  bkwd_prod = std::vector<Eigen::MatrixXd>(
+      period, Eigen::MatrixXd::Identity(xdim, xdim));
+  dTkdlambda =
+      std::vector<Eigen::VectorXd>(period, Eigen::VectorXd::Zero(xdim));
 }

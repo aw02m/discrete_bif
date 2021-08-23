@@ -56,29 +56,47 @@ Eigen::MatrixXd dTldx(const dynamical_system &ds) {
   return ret;
 }
 
-Eigen::VectorXd dTldlambda(const dynamical_system &ds) {
+Eigen::VectorXd dTldlambda(dynamical_system &ds) {
   Eigen::VectorXd ret(ds.xdim);
 
+  // ds.dTkdlambda is used for dTldxdlambda.
   ret = ds.dTdlambda[0];
+  ds.dTkdlambda[0] = ret;
   for (int i = 1; i < ds.period; i++) {
     ret = ds.dTdx[i] * ret + ds.dTdlambda[i];
+    ds.dTkdlambda[i] = ret;
   }
 
   return ret;
 }
 
-std::vector<Eigen::MatrixXd> dTldxdx(const dynamical_system &ds) {
+std::vector<Eigen::MatrixXd> dTldxdx(dynamical_system &ds) {
   std::vector<Eigen::MatrixXd> ret = std::vector<Eigen::MatrixXd>(
       ds.xdim, Eigen::MatrixXd::Zero(ds.xdim, ds.xdim));
-  std::vector<Eigen::MatrixXd> frwd_prod = std::vector<Eigen::MatrixXd>(
+
+  // prods are also used for dTldxdlambda.
+  // initialize with Identity matrix.
+  ds.frwd_prod = std::vector<Eigen::MatrixXd>(
       ds.period, Eigen::MatrixXd::Identity(ds.xdim, ds.xdim));
-  std::vector<Eigen::MatrixXd> bkwd_prod = std::vector<Eigen::MatrixXd>(
+  ds.bkwd_prod = std::vector<Eigen::MatrixXd>(
       ds.period, Eigen::MatrixXd::Identity(ds.xdim, ds.xdim));
 
-  ret[0] = ds.dTdxdx[1][0] * ds.dTdx[0] * ds.dTdx[0];
-  ret[0] += ds.dTdx[1] * ds.dTdxdx[0][0];
-  ret[1] = ds.dTdxdx[1][1] * ds.dTdx[0] * ds.dTdx[0];
-  ret[1] += ds.dTdx[1] * ds.dTdxdx[0][1];
+  for (int i = 0; i < ds.period; i++) {
+    for (int j = ds.period - 1; j >= 0; j--) {
+      if (j > i) {
+        ds.frwd_prod[i] *= ds.dTdx[j];
+      } else if (j < i) {
+        ds.bkwd_prod[i] *= ds.dTdx[j];
+      }
+    }
+  }
+
+  for (int i = 0; i < ds.xdim; i++) {
+    for (int j = 0; j < ds.period; j++) {
+      ret[i] +=
+          ds.frwd_prod[j] * ds.dTdxdx[j][i] * ds.bkwd_prod[j] * ds.bkwd_prod[j];
+    }
+  }
 
   return ret;
 }
@@ -87,12 +105,20 @@ Eigen::MatrixXd dTldxdlambda(const dynamical_system &ds) {
   Eigen::MatrixXd ret = Eigen::MatrixXd::Zero(ds.xdim, ds.xdim);
   Eigen::MatrixXd temp = Eigen::MatrixXd::Zero(ds.xdim, ds.xdim);
 
-  temp.col(0) = ds.dTdxdx[1][0] * ds.dTdlambda[0];
-  temp.col(1) = ds.dTdxdx[1][1] * ds.dTdlambda[0];
+  ret = ds.dTdxdlambda[0];
+  for (int i = 1; i < ds.period; i++) {
+    for (int j = 0; j < ds.xdim; j++) {
+      temp.col(j) = ds.dTdxdx[i][j] * ds.bkwd_prod[i] * ds.dTkdlambda[i];
+    }
+    ret = temp + ds.dTdx[i] * ret + ds.dTdxdlambda[i] * ds.bkwd_prod[i];
+  }
 
-  ret = temp + ds.dTdxdlambda[1];
-  ret *= ds.dTdx[0];
-  ret += ds.dTdx[1] * ds.dTdxdlambda[0];
+  // temp.col(0) = ds.dTdxdx[1][0] * ds.dTdlambda[0];
+  // temp.col(1) = ds.dTdxdx[1][1] * ds.dTdlambda[0];
+
+  // ret = temp + ds.dTdxdlambda[1];
+  // ret *= ds.dTdx[0];
+  // ret += ds.dTdx[1] * ds.dTdxdlambda[0];
 
   return ret;
 }
@@ -110,7 +136,6 @@ double det_derivative(const Eigen::MatrixXd &A, const Eigen::MatrixXd &dA,
 
   return ret;
 }
-
 
 // numerical differentiation version
 // std::vector<Eigen::MatrixXd> dTldxdx(dynamical_system &ds) {

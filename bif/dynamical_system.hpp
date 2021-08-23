@@ -30,6 +30,11 @@ public:
   std::vector<std::vector<Eigen::MatrixXd>> dTdxdx;
   std::vector<Eigen::MatrixXd> dTdxdlambda;
 
+  // these are common terms of second derivatives.
+  std::vector<Eigen::MatrixXd> frwd_prod;
+  std::vector<Eigen::MatrixXd> bkwd_prod;
+  std::vector<Eigen::VectorXd> dTkdlambda;
+
   Eigen::MatrixXd dTldx;
   Eigen::MatrixXd dTldlambda;
   std::vector<Eigen::MatrixXd> dTldxdx;

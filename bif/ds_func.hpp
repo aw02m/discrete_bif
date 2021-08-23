@@ -11,8 +11,8 @@ Eigen::VectorXd func_newton(const dynamical_system &ds);
 Eigen::MatrixXd jac_newton(const dynamical_system &ds);
 
 Eigen::MatrixXd dTldx(const dynamical_system &ds);
-Eigen::VectorXd dTldlambda(const dynamical_system &ds);
-std::vector<Eigen::MatrixXd> dTldxdx(const dynamical_system &ds);
+Eigen::VectorXd dTldlambda(dynamical_system &ds);
+std::vector<Eigen::MatrixXd> dTldxdx(dynamical_system &ds);
 Eigen::MatrixXd dTldxdlambda(const dynamical_system &ds);
 // numerical differentiation version
 // std::vector<Eigen::MatrixXd> dTldxdx(dynamical_system &ds);
