@@ -88,7 +88,7 @@ $\bm{x}_k = T^k(\bm{x}_0, \lambda)$として，
 (正しい例:$\prod_{k=0}^{\ell-1}\partial T/\partial \bm{x}|_{\bm{x}=\bm{x}_{(\ell-1)-k}}$.)
 また，プログラミングにおける``評価''の意味合いを込めて，
 偏微分への代入記号に縦線を用いたものは数値を単に代入した行列であるとする．
-明示的に引数を$()$で表記している場合は数学的な関数及び写像として扱う．
+明示的に引数を$(\ldots)$で表記している場合は数学的な関数及び写像として扱う．
 
 \subsection{分岐条件}
 固定点の安定性は固定点まわりの線形化空間の写像に対する安定性で議論できる．
@@ -232,16 +232,16 @@ $\bm{x}$, $\lambda$による偏微分が必要であるが，実際に計算し�
     \left.\pdiff{1}{T}{\bm{x}}\right|_{\bm{x}=\bm{x}_0}
     \pdiff{1}{T^1}{\lambda}(\bm{x}_0, \lambda) &= 
     \begin{pmatrix}
-        \left.\pdiff{1}{{}^2T}{\bm{x}\partial x}\right|_{\bm{x}=\bm{x}_0} &
-        \left.\pdiff{1}{{}^2T}{\bm{x}\partial y}\right|_{\bm{x}=\bm{x}_0}
+        \left.\pdiff{1}{{}^2T}{\bm{x}\partial x}\right|_{\bm{x}=\bm{x}_1} &
+        \left.\pdiff{1}{{}^2T}{\bm{x}\partial y}\right|_{\bm{x}=\bm{x}_1}
     \end{pmatrix}
     \left.\pdiff{1}{T}{\bm{x}}\right|_{\bm{x}=\bm{x}_0}
     \pdiff{1}{T^1}{\lambda}(\bm{x}_0, \lambda)  \\ &=
     \begin{pmatrix}
-        \left.\pdiff{1}{{}^2T}{\bm{x}\partial x}\right|_{\bm{x}=\bm{x}_0}
+        \left.\pdiff{1}{{}^2T}{\bm{x}\partial x}\right|_{\bm{x}=\bm{x}_1}
         \left.\pdiff{1}{T}{\bm{x}}\right|_{\bm{x}=\bm{x}_0}
         \left.\pdiff{1}{T}{\lambda}\right|_{\bm{x}=\bm{x}_0} &
-        {}\hspace{0.5cm} \left.\pdiff{1}{{}^2T}{\bm{x}\partial y}\right|_{\bm{x}=\bm{x}_0}
+        {}\hspace{0.5cm} \left.\pdiff{1}{{}^2T}{\bm{x}\partial y}\right|_{\bm{x}=\bm{x}_1}
         \left.\pdiff{1}{T}{\bm{x}}\right|_{\bm{x}=\bm{x}_0}
         \left.\pdiff{1}{T}{\lambda}\right|_{\bm{x}=\bm{x}_0}
     \end{pmatrix}.
@@ -251,10 +251,139 @@ $\bm{x}$, $\lambda$による偏微分が必要であるが，実際に計算し�
 よって各要素は$(2\times2)*(2\times2)*(2\times1)=(2\times1)$のベクトルになる．
 結果，式(\ref{eq:ex_dTldxdlambda})は$(2\times2)$行列となり，望んだ結果が得られた．
 
-ここで用いた行列縮約表現は連続力学系の変分方程式にも応用できるため，
-これまでのプログラムをより美しく仕上げることができるであろう．
-
-% \section{分岐解析プログラムの使用方法}
+\section{付録：連続力学系の変分方程式}
+本資料の行列縮約表現を用いることで，連続力学系の変分方程式も簡潔に記述することができる．
+系が次の式で表現されるとする:
+\begin{align}
+    \diff{1}{\bm{x}}{t} = \bm{f}(t, \bm{x}, \lambda),\hspace{0.2cm}
+    \bm{f}:\bm{R}\times\bm{R}^n\times\bm{R}\rightarrow\bm{R}^n,\,
+    t\in\bm{R},\, \bm{x}\in\bm{R}^n,\, \lambda\in\bm{R}.
+    \label{eq:continuous}
+\end{align}
+初期値$\bm{x}_0$から出発して$\tau$時刻後に$\bm{x}_0$に帰還する解を$\bm{\varphi}$とし，
+次のように定義する:
+\begin{align}
+    \begin{split}
+        \bm{x}(t) &= \bm{\varphi}(t, \bm{x}_0, \lambda),\\
+        \bm{x}(t+\tau) &= \bm{\varphi}(t+\tau, \bm{x}_0, \lambda) = \bm{x}(t),\\
+        \bm{x}(0) &= \bm{x}_0.
+    \end{split}
+    \label{eq:continuous_trajectory}
+\end{align}
+式(\ref{eq:continuous}),(\ref{eq:continuous_trajectory})より，
+\begin{align}
+    \diff{1}{\bm{\varphi}}{t}(t, \bm{x}_0, \lambda) =
+    \bm{f}(t, \bm{\varphi}(t, \bm{x}_0, \lambda), \lambda).
+    \label{eq:ve_1}
+\end{align}
+式(\ref{eq:ve_1})を$\bm{x}_0$で偏微分し，
+\begin{align}
+    \pdiff{1}{}{\bm{x}_0} \diff{1}{\bm{\varphi}}{t}(t, \bm{x}_0, \lambda) =
+    \pdiff{1}{}{\bm{x}_0} \bm{f}(t, \bm{\varphi}(t, \bm{x}_0, \lambda), \lambda).
+\end{align}    
+式(\ref{eq:continuous})が十分なめらかであると仮定すると，
+偏微分の順序は交換可能である．
+合成関数の微分を適用して，
+\begin{align}
+    \diff{1}{}{t}\pdiff{1}{\bm{\varphi}}{\bm{x}_0} =
+    \pdiff{1}{\bm{f}}{\bm{x}}(t, \bm{\varphi}(t, \bm{x}_0, \lambda), \lambda)
+    \pdiff{1}{\bm{\varphi}}{\bm{x}_0}.
+    \label{eq:ve_init1}
+\end{align}
+同じく式(\ref{eq:ve_1})を$\lambda$で偏微分して整理すると(合成関数・多変数関数の微分)，
+\begin{align}
+    \diff{1}{}{t}\pdiff{1}{\bm{\varphi}}{\lambda} =
+    \pdiff{1}{\bm{f}}{\bm{x}}(t, \bm{\varphi}(t, \bm{x}_0, \lambda), \lambda)
+    \pdiff{1}{\bm{\varphi}}{\lambda} +
+    \pdiff{1}{\bm{f}}{\lambda}(t, \bm{\varphi}(t, \bm{x}_0, \lambda), \lambda).
+    \label{eq:ve_para1}
+\end{align}
+これで初期値及びパラメタに関する第一変分方程式が求まった．
+続いて，式(\ref{eq:ve_init1})を$\bm{x}_0$で偏微分すると，
+\begin{align}
+    \diff{1}{}{t}\pdiff{1}{{}^2\bm{\varphi}}{\bm{x}_0^2} =
+    \pdiff{1}{{}^2\bm{f}}{\bm{x}^2}(t, \bm{\varphi}(t, \bm{x}_0, \lambda), \lambda)
+    \pdiff{1}{\bm{\varphi}}{\bm{x}_0}
+    \pdiff{1}{\bm{\varphi}}{\bm{x}_0}
+    + \pdiff{1}{\bm{f}}{\bm{x}}(t, \bm{\varphi}(t, \bm{x}_0, \lambda),\lambda)
+    \pdiff{1}{{}^2\bm{\varphi}}{\bm{x}_0^2}.
+    \label{eq:ve_init2}
+\end{align}
+行列縮約表現を用いると，$n=2$のとき，
+\begin{align}
+\begin{split}    
+    \begin{pmatrix}
+        \diff{1}{}{t}\pdiff{1}{{}^2\bm{\varphi}}{\bm{x}_0\partial x_0} &
+        \diff{1}{}{t}\pdiff{1}{{}^2\bm{\varphi}}{\bm{x}_0\partial y_0}
+    \end{pmatrix}
+    &=
+    \begin{pmatrix}
+        \pdiff{1}{{}^2\bm{f}}{\bm{x}\partial x}(t, \bm{\varphi}(t, \bm{x}_0, \lambda), \lambda) &
+        \pdiff{1}{{}^2\bm{f}}{\bm{x}\partial y}(t, \bm{\varphi}(t, \bm{x}_0, \lambda), \lambda)
+    \end{pmatrix}    
+    \pdiff{1}{\bm{\varphi}}{\bm{x}_0}
+    \pdiff{1}{\bm{\varphi}}{\bm{x}_0}\\
+    &{}\hspace{3cm}+
+    \pdiff{1}{\bm{f}}{\bm{x}}(t, \bm{\varphi}(t, \bm{x}_0, \lambda), \lambda)
+    \begin{pmatrix}
+        \pdiff{1}{{}^2\bm{\varphi}}{\bm{x}_0\partial x_0} &
+        \pdiff{1}{{}^2\bm{\varphi}}{\bm{x}_0\partial y_0}
+    \end{pmatrix}\\
+    &=
+    \left(
+        \pdiff{1}{{}^2\bm{f}}{\bm{x}\partial x}(t, \bm{\varphi}(t, \bm{x}_0, \lambda), \lambda)
+        \left(\pdiff{1}{\bm{\varphi}}{\bm{x}_0}\right)^2
+        + \pdiff{1}{\bm{f}}{\bm{x}}(t, \bm{\varphi}(t, \bm{x}_0, \lambda), \lambda)
+        \pdiff{1}{{}^2\bm{\varphi}}{\bm{x}_0\partial x_0}
+    \right.\\
+    &\left.
+        {}\hspace{3cm}    
+        \pdiff{1}{{}^2\bm{f}}{\bm{x}\partial y}(t, \bm{\varphi}(t, \bm{x}_0, \lambda), \lambda)
+        \left(\pdiff{1}{\bm{\varphi}}{\bm{x}_0}\right)^2
+        + \pdiff{1}{\bm{f}}{\bm{x}}(t, \bm{\varphi}(t, \bm{x}_0, \lambda), \lambda)
+        \pdiff{1}{{}^2\bm{\varphi}}{\bm{x}_0\partial y_0}
+    \right)
+\end{split}
+\end{align}    
+また，式(\ref{eq:ve_para1})を$\bm{x}_0$で偏微分すると，
+\begin{align}
+    \diff{1}{}{t}\pdiff{1}{{}^2\bm{\varphi}}{\lambda \partial\bm{x}_0} =
+    \pdiff{1}{{}^2\bm{f}}{\bm{x}^2}(t, \bm{\varphi}(t, \bm{x}_0, \lambda), \lambda)
+    \pdiff{1}{\bm{\varphi}}{\bm{x}_0}
+    \pdiff{1}{\bm{\varphi}}{\lambda} +
+    \pdiff{1}{\bm{f}}{\bm{x}}(t, \bm{\varphi}(t, \bm{x}_0, \lambda), \lambda)
+    \pdiff{1}{{}^2\bm{\varphi}}{\lambda \partial \bm{x}_0} +
+    \pdiff{1}{{}^2\bm{f}}{\lambda \partial \bm{x}}(t, \bm{\varphi}(t, \bm{x}_0, \lambda), \lambda)
+    \pdiff{1}{\bm{\varphi}}{\bm{x}_0}.
+    \label{eq:ve_para_init}
+\end{align}
+注意すべきは第一項で，$n=2$のとき，
+\begin{align}
+\begin{split}    
+    \pdiff{1}{{}^2\bm{f}}{\bm{x}^2}(t, \bm{\varphi}(t, \bm{x}_0, \lambda), \lambda)
+    \pdiff{1}{\bm{\varphi}}{\bm{x}_0}
+    \pdiff{1}{\bm{\varphi}}{\lambda} &=
+    \begin{pmatrix}
+        \pdiff{1}{{}^2\bm{f}}{\bm{x} \partial x}(t, \bm{\varphi}(t, \bm{x}_0, \lambda), \lambda) &
+        \pdiff{1}{{}^2\bm{f}}{\bm{x} \partial y}(t, \bm{\varphi}(t, \bm{x}_0, \lambda), \lambda)
+    \end{pmatrix}
+    \pdiff{1}{\bm{\varphi}}{\bm{x}_0}
+    \pdiff{1}{\bm{\varphi}}{\lambda}\\
+    &=
+    \begin{pmatrix}
+        \pdiff{1}{{}^2\bm{f}}{\bm{x} \partial x}(t, \bm{\varphi}(t, \bm{x}_0, \lambda), \lambda)
+        \pdiff{1}{\bm{\varphi}}{\bm{x}_0}
+        \pdiff{1}{\bm{\varphi}}{\lambda} & 
+        \pdiff{1}{{}^2\bm{f}}{\bm{x} \partial y}(t, \bm{\varphi}(t, \bm{x}_0, \lambda), \lambda)
+        \pdiff{1}{\bm{\varphi}}{\bm{x}_0}
+        \pdiff{1}{\bm{\varphi}}{\lambda}
+    \end{pmatrix}    
+\end{split}
+\end{align}
+これで第二変分方程式も求まった．
+これらの変分方程式を式(\ref{eq:continuous})と連立し，
+$0$から$\tau$時刻まで同時に数値積分すれば解の初期値及びパラメタによる微分が得られる．
+連続力学系におけるポアンカレ写像の合成写像のJacobi行列は前節の手法を直接適用すればよい．
 
 \begin{thebibliography}{3}
 \bibitem{chaosCG} ``CによるカオスCG'', T. Ueta，H. Kawakami.
