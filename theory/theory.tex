@@ -1,0 +1,266 @@
+\documentclass[a4paper,dvipdfmx]{jsarticle}
+\usepackage{amsmath, amssymb}
+\usepackage{txfonts}
+\usepackage[dvipdfmx]{graphicx}
+\usepackage{bm}
+
+\graphicspath{{./figs/}}
+
+\newcommand{\diff}[3]{
+ \ifnum #1<1
+ \text{Args[0] should be more than 1} \else{
+ \ifnum #1=1 \displaystyle \frac{d#2}{d#3}\else
+ \displaystyle \frac{d^{#1} #2}{d#3^{#1}}\fi
+ }\fi
+}
+
+\newcommand{\pdiff}[3]{
+ \ifnum #1<1
+ \text{Args[0] should be more than 1} \else{
+ \ifnum #1=1 \displaystyle \frac{\partial #2}{\partial #3}\else
+ \displaystyle \frac{\partial^{#1} #2}{\partial #3^{#1}}\fi
+ }\fi
+}
+
+\newcommand{\ppdiff}[3]{
+    \displaystyle\frac{\partial^{2} #1}{\partial #2 \partial #3}
+}
+
+
+
+\begin{document}
+
+\title{高次元離散力学系の汎用局所分岐計算手法}
+
+\author{EBIN ES}
+% \author{Seiya Amoh${}^\dag$ and Tetsushi Ueta${}^\dag$}
+
+\maketitle
+
+% \tableofcontents
+
+\section{はじめに}
+本資料は，高次元離散力学系に対する汎用分岐計算プログラムを実装する際に作成した．
+特にNewton法を用いた分岐計算におけるJacobi行列の$2$階変分方程式を重点的に解説している．
+$2$階変分方程式は``$3$-dimensional matrix''とも``Class-$3$ tensor''
+とも言える非常に煩雑な式となるが，テンソルの概念とは異なった多次元行列を考えることにより
+通常の行列演算積を用いた簡潔な数式処理が行える.
+
+付属する分岐計算プログラムは以降のアルゴリズムに沿って作成されている．
+自身で分岐計算プログラムを設計する際や，付属プログラムを使用する際に本資料が参考になるであろう．
+離散力学系そのものの情報については文献\cite{chaosCG}及び\cite{kawakami}を参照していただきたい．
+
+\section{離散力学系}
+離散力学系を次のように定義する:
+\begin{align}
+    \begin{split}    
+    \bm{x}_{k+1} = T(\bm{x}_k, \lambda),\hspace{0.2cm}
+    T:\bm{R}^n\times\bm{R}&\rightarrow\bm{R}^n,\, \bm{x}\in\bm{R}^n,\, \lambda\in\bm{R}.
+    \end{split}
+    \label{eq:discrete_system}
+\end{align}
+
+\subsection{固定点条件}
+$\ell$周期固定点は次を満たす:
+\begin{align}
+    T^\ell(\bm{x}_0, \lambda) - \bm{x}_0 = \bm{0}.
+\end{align}
+ここで，$T^k = \overbrace{T\circ\cdots\circ T}^k$.
+これをNewton法で$\bm{x}_0$について解く．
+
+Newton法に必要なJacobi行列は$T^\ell$が合成関数であることに注意すると，
+$\bm{x}_k = T^k(\bm{x}_0, \lambda)$として，
+\begin{align}
+\begin{split}    
+    \pdiff{1}{T^\ell}{\bm{x}}(\bm{x}_0, \lambda) &= 
+    \prod_{k=\ell-1}^{0} \left.\pdiff{1}{T}{\bm{x}}\right|_{\bm{x}=\bm{x}_k}\\
+    &= \left.\pdiff{1}{T}{\bm{x}}\right|_{\bm{x}=\bm{x}_{\ell-1}}
+    \left.\pdiff{1}{T}{\bm{x}}\right|_{\bm{x}=\bm{x}_{\ell-2}}
+    \cdots
+    \left.\pdiff{1}{T}{\bm{x}}\right|_{\bm{x}=\bm{x}_1}
+    \left.\pdiff{1}{T}{\bm{x}}\right|_{\bm{x}=\bm{x}_0}.
+\end{split}
+\label{eq:dTldx}
+\end{align}
+ここで，$\prod_{k=\ell-1}^{0}$は総積の表記法として適切ではないが，
+表記の簡潔さと理解のしやすさのために，以降これを$k = \ell-1, \ell-2, \cdots, 1, 0$となる
+イテレータとして用いる．
+(正しい例:$\prod_{k=0}^{\ell-1}\partial T/\partial \bm{x}|_{\bm{x}=\bm{x}_{(\ell-1)-k}}$.)
+また，プログラミングにおける``評価''の意味合いを込めて，
+偏微分への代入記号に縦線を用いたものは数値を単に代入した行列であるとする．
+明示的に引数を$()$で表記している場合は数学的な関数及び写像として扱う．
+
+\subsection{分岐条件}
+固定点の安定性は固定点まわりの線形化空間の写像に対する安定性で議論できる．
+すなわち，特性定数が$\mu=e^{j\theta}$を満たす状態$(\bm{x}_0, \lambda)$が分岐点である．
+これより分岐条件は，
+\begin{align}
+\begin{cases}
+    T^\ell(\bm{x}_0, \lambda) - \bm{x}_0 = \bm{0}\\
+    \chi(\bm{x}_0, \lambda) = \mathrm{det}\left(\pdiff{1}{T^\ell}{\bm{x}}(\bm{x}_0, \lambda) - \mu I\right) = 0
+\end{cases}.
+\label{eq:bif_cond}
+\end{align}
+
+Newton法に必要なJacobi行列は,
+\begin{align}
+    \begin{pmatrix}
+        \pdiff{1}{T^\ell}{\bm{x}}(\bm{x}_0, \lambda) &
+        \pdiff{1}{T^\ell}{\lambda}(\bm{x}_0, \lambda) \\
+        \pdiff{1}{\chi}{\bm{x}}(\bm{x}_0, \lambda) &
+        \pdiff{1}{\chi}{\lambda}(\bm{x}_0, \lambda)
+    \end{pmatrix}.
+\end{align}
+$\partial T^\ell/\partial \lambda$は，合成関数及び多変数関数の微分を用いて，
+\begin{align}
+    \begin{split}    
+    \pdiff{1}{T^\ell}{\lambda}(\bm{x}_0, \lambda) &=
+        \left.\pdiff{1}{T}{\bm{x}}\right|_{\bm{x}=\bm{x}_{\ell-1}}
+        \pdiff{1}{T^{\ell-1}}{\lambda}(\bm{x}_0, \lambda)
+        + \left.\pdiff{1}{T}{\lambda}\right|_{\bm{x}=\bm{x}_{\ell-1}},\\
+    \pdiff{1}{T^k}{\lambda}(\bm{x}_0, \lambda) &=
+        \left.\pdiff{1}{T}{\bm{x}}\right|_{\bm{x}=\bm{x}_{k-1}}
+        \pdiff{1}{T^{k-1}}{\lambda}(\bm{x}_0, \lambda)
+        + \left.\pdiff{1}{T}{\lambda}\right|_{\bm{x}=\bm{x}_{k-1}},\\
+    \pdiff{1}{T^1}{\lambda}(\bm{x}_0, \lambda) &=
+        \left.\pdiff{1}{T}{\lambda}\right|_{\bm{x}=\bm{x}_0}.
+    \end{split}
+    \label{eq:dTldlambda}
+\end{align}
+
+さて，ここで問題となるのが$\chi(\bm{x}_0, \lambda)$の偏微分である．
+これらはそれぞれ$\partial T^\ell/\partial \bm{x}(\bm{x}_0, \lambda)$の
+$\bm{x}$, $\lambda$による偏微分が必要であるが，実際に計算してみると
+テンソルのように奥行きのある立体行列が生成されることがわかる．
+実際にテンソル積は直積，外積，クロネッカー積といった複数の演算が存在するが，
+通常の行列積のような計算は(調べた限り)定義されていないし，
+これらのテンソル積で計算を行うと望んだ結果を得ることができない．
+そこで，この立体行列を``$3$-dimensional matrix''と考え，行列縮約表現と呼ぶ．
+コンセプトは文献\cite{multidim}及び\cite{3d}を参照されたし．
+
+まず，$\partial T^\ell/\partial \bm{x}(\bm{x}_0, \lambda)$の$\bm{x}$
+による偏微分は式(\ref{eq:dTldx})に注意して，
+\begin{align}
+\begin{split}    
+    \pdiff{1}{}{\bm{x}}\pdiff{1}{T^\ell}{\bm{x}}(\bm{x}_0, \lambda) &=
+    \left.\pdiff{1}{{}^2T}{\bm{x}^2}\right|_{\bm{x}=\bm{x}_{\ell-1}}
+    \prod_{k=\ell-2}^0\left.\pdiff{1}{T}{\bm{x}}\right|_{\bm{x}=\bm{x}_k}
+    \prod_{k=\ell-2}^0\left.\pdiff{1}{T}{\bm{x}}\right|_{\bm{x}=\bm{x}_k}\\
+    &+ \left.\pdiff{1}{T}{\bm{x}}\right|_{\bm{x}=\bm{x}_{\ell-1}}
+    \left.\pdiff{1}{{}^2T}{\bm{x}^2}\right|_{\bm{x}=\bm{x}_{\ell-2}}
+    \prod_{k=\ell-3}^0\left.\pdiff{1}{T}{\bm{x}}\right|_{\bm{x}=\bm{x}_k}
+    \prod_{k=\ell-3}^0\left.\pdiff{1}{T}{\bm{x}}\right|_{\bm{x}=\bm{x}_k}\\
+    &{}\hspace{4cm}\vdots \\
+    &+ \prod_{k=\ell-1}^{j+1}\left.\pdiff{1}{T}{\bm{x}}\right|_{\bm{x}=\bm{x}_k}
+    \left.\pdiff{1}{{}^2T}{\bm{x}^2}\right|_{\bm{x}=\bm{x}_{j}}
+    \prod_{k=j-1}^0\left.\pdiff{1}{T}{\bm{x}}\right|_{\bm{x}=\bm{x}_k}
+    \prod_{k=j-1}^0\left.\pdiff{1}{T}{\bm{x}}\right|_{\bm{x}=\bm{x}_k}\\
+    &{}\hspace{4cm}\vdots \\
+    &+ \prod_{k=j-1}^1\left.\pdiff{1}{T}{\bm{x}}\right|_{\bm{x}=\bm{x}_k}
+    \left.\pdiff{1}{{}^2T}{\bm{x}^2}\right|_{\bm{x}=\bm{x}_0}.
+\end{split}
+\end{align}
+注目すべきは立体行列$\partial^2 T^\ell/\partial \bm{x}^2$と通常の行列の積である．
+文献\cite{multidim}の方法を用いて行列縮約表現を行うと，$n=2, \ell=2$の場合，
+\begin{align}
+    \begin{split}
+        \begin{pmatrix}
+            \pdiff{1}{{}^2T^2}{\bm{x}\partial x}(\bm{x}, \lambda) &
+            \pdiff{1}{{}^2T^2}{\bm{x}\partial y}(\bm{x}, \lambda)
+        \end{pmatrix}
+        =
+        \begin{pmatrix}
+            \left.\pdiff{1}{{}^2T}{\bm{x}\partial x}\right|_{\bm{x}=\bm{x}_1} &
+            \left.\pdiff{1}{{}^2T}{\bm{x}\partial y}\right|_{\bm{x}=\bm{x}_1}
+        \end{pmatrix}
+        \left.\pdiff{1}{T}{\bm{x}}\right|_{\bm{x}=\bm{x}_0}
+        \left.\pdiff{1}{T}{\bm{x}}\right|_{\bm{x}=\bm{x}_0}
+        + \left.\pdiff{1}{T}{\bm{x}}\right|_{\bm{x}=\bm{x}_1}
+        \begin{pmatrix}
+            \left.\pdiff{1}{{}^2T}{\bm{x}\partial x}\right|_{\bm{x}=\bm{x}_0}
+            \left.\pdiff{1}{{}^2T}{\bm{x}\partial y}\right|_{\bm{x}=\bm{x}_0}
+        \end{pmatrix}\\
+        =
+        \begin{pmatrix}
+            \left.\pdiff{1}{{}^2T}{\bm{x}\partial x}\right|_{\bm{x}=\bm{x}_1}
+            \left.\pdiff{1}{T}{\bm{x}}\right|_{\bm{x}=\bm{x}_0}^2
+            + \left.\pdiff{1}{T}{\bm{x}}\right|_{\bm{x}=\bm{x}_1}
+            \left.\pdiff{1}{{}^2T}{\bm{x}\partial x}\right|_{\bm{x}=\bm{x}_0} &
+            {}\hspace{0.5cm}
+            \left.\pdiff{1}{{}^2T}{\bm{x}\partial y}\right|_{\bm{x}=\bm{x}_1}
+            \left.\pdiff{1}{T}{\bm{x}}\right|_{\bm{x}=\bm{x}_0}^2
+            + \left.\pdiff{1}{T}{\bm{x}}\right|_{\bm{x}=\bm{x}_1}
+            \left.\pdiff{1}{{}^2T}{\bm{x}\partial y}\right|_{\bm{x}=\bm{x}_0}
+        \end{pmatrix}    
+    \end{split}
+\end{align}
+として通常の行列積と同様に$2$階変分方程式の表現が可能になる．
+立体行列の式を上から眺めるような表現である\cite{3d}．
+
+続いて，$\partial T^\ell/\partial \lambda(\bm{x}_0, \lambda)$の$\bm{x}$
+による偏微分は式(\ref{eq:dTldlambda})に注意して，
+\begin{align}
+    \begin{split}    
+    \pdiff{1}{}{\bm{x}}\pdiff{1}{T^\ell}{\lambda}(\bm{x}_0, \lambda) &=
+    \left.\pdiff{1}{{}^2T}{\bm{x}^2}\right|_{\bm{x}=\bm{x}_{\ell-1}}
+    \prod_{k=\ell-2}^0\left.\pdiff{1}{T}{\bm{x}}\right|_{\bm{x}=\bm{x}_k}
+    \pdiff{1}{T^{\ell-1}}{\lambda}(\bm{x}_0, \lambda)
+    + \left.\pdiff{1}{T}{\bm{x}}\right|_{\bm{x}=\bm{x}_{\ell-1}}
+    \pdiff{1}{}{\lambda}\pdiff{1}{T^{\ell-1}}{\bm{x}}(\bm{x}_0, \lambda)
+    + \left.\pdiff{1}{T}{\bm{x}\partial\lambda}\right|_{\bm{x}=\bm{x}_{\ell-1}}
+    \prod_{k=\ell-2}^0\left.\pdiff{1}{T}{\bm{x}}\right|_{\bm{x}=\bm{x}_k},\\
+    \pdiff{1}{}{\bm{x}}\pdiff{1}{T^j}{\lambda}(\bm{x}_0, \lambda) &=
+    \left.\pdiff{1}{{}^2T}{\bm{x}^2}\right|_{\bm{x}=\bm{x}_{j-1}}
+    \prod_{k=j-2}^0\left.\pdiff{1}{T}{\bm{x}}\right|_{\bm{x}=\bm{x}_k}
+    \pdiff{1}{T^{j-1}}{\lambda}(\bm{x}_0, \lambda)
+    + \left.\pdiff{1}{T}{\bm{x}}\right|_{\bm{x}=\bm{x}_{j-1}}
+    \pdiff{1}{}{\lambda}\pdiff{1}{T^{j-1}}{\bm{x}}(\bm{x}_0, \lambda)
+    + \left.\pdiff{1}{T}{\bm{x}\partial\lambda}\right|_{\bm{x}=\bm{x}_{j-1}}
+    \prod_{k=j-2}^0\left.\pdiff{1}{T}{\bm{x}}\right|_{\bm{x}=\bm{x}_k},\\
+    \pdiff{1}{}{\bm{x}}\pdiff{1}{T^1}{\lambda}(\bm{x}_0, \lambda) &=
+    \left.\pdiff{1}{{}^2T}{\bm{x}\partial\lambda}\right|_{\bm{x}=\bm{x}_0}.
+    \end{split}
+    \label{eq:dTldxdlambda}
+\end{align}
+これは$\partial T^\ell/\partial \bm{x}(\bm{x}_0, \lambda)$の$\lambda$による
+微分によっても求まるが，式(\ref{eq:dTldxdlambda})に比べて非常に煩雑になるため非推奨．
+各式の第一項には立体行列$*$行列$*$ベクトルが出現しているが，
+行列縮約表現を用いると，$n=2, \ell=2$の場合，
+\begin{align}
+    \begin{split}    
+    \left.\pdiff{1}{{}^2T}{\bm{x}^2}\right|_{\bm{x}=\bm{x}_1}
+    \left.\pdiff{1}{T}{\bm{x}}\right|_{\bm{x}=\bm{x}_0}
+    \pdiff{1}{T^1}{\lambda}(\bm{x}_0, \lambda) &= 
+    \begin{pmatrix}
+        \left.\pdiff{1}{{}^2T}{\bm{x}\partial x}\right|_{\bm{x}=\bm{x}_0} &
+        \left.\pdiff{1}{{}^2T}{\bm{x}\partial y}\right|_{\bm{x}=\bm{x}_0}
+    \end{pmatrix}
+    \left.\pdiff{1}{T}{\bm{x}}\right|_{\bm{x}=\bm{x}_0}
+    \pdiff{1}{T^1}{\lambda}(\bm{x}_0, \lambda)  \\ &=
+    \begin{pmatrix}
+        \left.\pdiff{1}{{}^2T}{\bm{x}\partial x}\right|_{\bm{x}=\bm{x}_0}
+        \left.\pdiff{1}{T}{\bm{x}}\right|_{\bm{x}=\bm{x}_0}
+        \left.\pdiff{1}{T}{\lambda}\right|_{\bm{x}=\bm{x}_0} &
+        {}\hspace{0.5cm} \left.\pdiff{1}{{}^2T}{\bm{x}\partial y}\right|_{\bm{x}=\bm{x}_0}
+        \left.\pdiff{1}{T}{\bm{x}}\right|_{\bm{x}=\bm{x}_0}
+        \left.\pdiff{1}{T}{\lambda}\right|_{\bm{x}=\bm{x}_0}
+    \end{pmatrix}.
+    \end{split}
+    \label{eq:ex_dTldxdlambda}
+\end{align}
+よって各要素は$(2\times2)*(2\times2)*(2\times1)=(2\times1)$のベクトルになる．
+結果，式(\ref{eq:ex_dTldxdlambda})は$(2\times2)$行列となり，望んだ結果が得られた．
+
+ここで用いた行列縮約表現は連続力学系の変分方程式にも応用できるため，
+これまでのプログラムをより美しく仕上げることができるであろう．
+
+% \section{分岐解析プログラムの使用方法}
+
+\begin{thebibliography}{3}
+\bibitem{chaosCG} ``CによるカオスCG'', T. Ueta，H. Kawakami.
+\bibitem{kawakami} ``非線形現象入門'', H. Kawakami.
+\bibitem{multidim} ``Multidimensional Matrix Mathematics: Multidimensional Matrix Equality, Addition, Subtraction, and Multiplication, Part 2 of 6'', Ashu M. G.
+\bibitem{3d} ``３次元行列の試み'', H. Narumi.
+\end{thebibliography}    
+
+\end{document}
