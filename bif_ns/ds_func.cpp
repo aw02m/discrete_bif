@@ -1,7 +1,7 @@
 #include "ds_func.hpp"
 
 void store_state(const Eigen::VectorXd &vp, dynamical_system &ds) {
-  Eigen::VectorXd x = vp(Eigen::seqN(0, ds.xdim));
+  Eigen::VectorXd x = vp(Eigen::seqN(0, ds.xdim)).real();
   Eigen::MatrixXd I = Eigen::MatrixXd::Identity(ds.xdim, ds.xdim);
 
   ds.xk[0] = x;
@@ -24,29 +24,46 @@ void store_state(const Eigen::VectorXd &vp, dynamical_system &ds) {
   }
 
   ds.eigvals = eigenvalues(ds);
+  ds.mu = Eigen::dcomplex(std::cos(ds.theta), std::sin(ds.theta));
 
   ds.chara_poly = ds.dTldx - ds.mu * I;
 }
 
 Eigen::VectorXd func_newton(const dynamical_system &ds) {
-  Eigen::VectorXd ret(ds.xdim + 1);
+  Eigen::VectorXd ret(ds.xdim + 2);
+  Eigen::dcomplex chi(0, 0);
 
   ret(Eigen::seqN(0, ds.xdim)) = ds.xk[ds.period] - ds.xk[0];
-  ret(ds.xdim) = (ds.chara_poly).determinant();
+  chi = (ds.chara_poly).determinant();
+  ret(ds.xdim) = chi.real();
+  ret(ds.xdim + 1) = chi.imag();
 
   return ret;
 }
 
 Eigen::MatrixXd jac_newton(const dynamical_system &ds) {
-  Eigen::MatrixXd ret(ds.xdim + 1, ds.xdim + 1);
+  Eigen::MatrixXd ret(ds.xdim + 2, ds.xdim + 2);
   Eigen::MatrixXd I = Eigen::MatrixXd::Identity(ds.xdim, ds.xdim);
+  Eigen::MatrixXcd dchidx(1, ds.xdim);
+  Eigen::dcomplex dchidlambda(0, 0);
+  Eigen::dcomplex dchidtheta(0, 0);
+  for (int i = 0; i < ds.xdim; i++) {
+    dchidx(0, i) = det_derivative(ds.chara_poly, ds.dTldxdx[i], ds);
+  }
+  dchidlambda = det_derivative(ds.chara_poly, ds.dTldxdlambda, ds);
+  Eigen::MatrixXcd dpolydtheta =
+      Eigen::dcomplex(std::sin(ds.theta), -std::cos(ds.theta)) * I;
+  dchidtheta = det_derivative(ds.chara_poly, dpolydtheta, ds);
 
   ret(Eigen::seqN(0, ds.xdim), Eigen::seqN(0, ds.xdim)) = ds.dTldx - I;
   ret(Eigen::seqN(0, ds.xdim), ds.xdim) = ds.dTldlambda;
-  for (int i = 0; i < ds.xdim; i++) {
-    ret(ds.xdim, i) = det_derivative(ds.chara_poly, ds.dTldxdx[i], ds);
-  }
-  ret(ds.xdim, ds.xdim) = det_derivative(ds.chara_poly, ds.dTldxdlambda, ds);
+  ret(Eigen::seqN(0, ds.xdim), ds.xdim + 1) = Eigen::VectorXd::Zero(ds.xdim);
+  ret(ds.xdim, Eigen::seqN(0, ds.xdim)) = dchidx.real();
+  ret(ds.xdim, ds.xdim) = dchidlambda.real();
+  ret(ds.xdim, ds.xdim + 1) = dchidtheta.real();
+  ret(ds.xdim + 1, Eigen::seqN(0, ds.xdim)) = dchidx.imag();
+  ret(ds.xdim + 1, ds.xdim) = dchidlambda.imag();
+  ret(ds.xdim + 1, ds.xdim + 1) = dchidtheta.imag();
 
   return ret;
 }
@@ -128,14 +145,15 @@ Eigen::MatrixXd dTldxdlambda(const dynamical_system &ds) {
   return ret;
 }
 
-double det_derivative(const Eigen::MatrixXd &A, const Eigen::MatrixXd &dA,
-                      const dynamical_system &ds) {
-  Eigen::MatrixXd temp(ds.xdim, ds.xdim);
-  double ret;
+Eigen::dcomplex det_derivative(const Eigen::MatrixXcd &A,
+                               const Eigen::MatrixXcd &dA,
+                               const dynamical_system &ds) {
+  Eigen::MatrixXcd temp(ds.xdim, ds.xdim);
+  Eigen::dcomplex ret(0, 0);
 
   for (int i = 0; i < ds.xdim; i++) {
     temp = A;
-    temp.col(i) = dA.col(i);
+    temp.col(i) = dA.col(i).cast<Eigen::dcomplex>();
     ret += temp.determinant();
   }
 

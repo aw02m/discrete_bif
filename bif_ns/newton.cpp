@@ -2,20 +2,20 @@
 #include <chrono>
 
 void newton(dynamical_system &ds) {
-  Eigen::VectorXd vp(ds.xdim + 1);
+  Eigen::VectorXd vp(ds.xdim + 2);
   // vp << ds.x0 << ds.params(ds.var_param);
   vp(Eigen::seqN(0, ds.xdim)) = ds.x0;
   vp(ds.xdim) = ds.params(ds.var_param);
-  Eigen::VectorXd vn(ds.xdim + 1);
-  Eigen::VectorXd F(ds.xdim + 1);
-  Eigen::MatrixXd J(ds.xdim + 1, ds.xdim + 1);
+  vp(ds.xdim + 1) = ds.theta;
+  Eigen::VectorXd vn(ds.xdim + 2);
+  Eigen::VectorXd F(ds.xdim + 2);
+  Eigen::MatrixXd J(ds.xdim + 2, ds.xdim + 2);
   double norm;
 
   for (int p = 0; p < ds.inc_iter; p++) {
     auto start = std::chrono::system_clock::now();
     for (int i = 0; i < ds.max_iter; i++) {
       store_state(vp, ds);
-
       F = func_newton(ds);
       J = jac_newton(ds);
       vn = Eigen::ColPivHouseholderQR<Eigen::MatrixXd>(J).solve(-F) + vp;
@@ -32,7 +32,7 @@ void newton(dynamical_system &ds) {
         std::cout << "time = " << msec << "[msec])" << std::endl;
         std::cout << "params : " << ds.params.transpose() << std::endl;
         std::cout << "x0     : "
-                  << vn(Eigen::seqN(0, ds.xdim)).real().transpose()
+                  << vn(Eigen::seqN(0, ds.xdim)).transpose()
                   << std::endl;
         std::cout << "(Re(μ), Im(μ)), abs(μ), arg(μ) :" << std::endl;
         for (int k = 0; k < ds.xdim; k++) {
@@ -44,6 +44,7 @@ void newton(dynamical_system &ds) {
                   << std::endl;
         vp = vn;
         ds.params(ds.var_param) = vn(ds.xdim);
+        ds.theta = vn(ds.xdim + 1);
         break;
       } else if (norm >= ds.explode) {
         std::cerr << "explode (iter = " << i + 1 << ")" << std::endl;
@@ -57,6 +58,7 @@ void newton(dynamical_system &ds) {
 
       vp = vn;
       ds.params(ds.var_param) = vn(ds.xdim);
+      ds.theta = vn(ds.xdim + 1);
     }
     ds.params[ds.inc_param] += ds.delta_inc;
   }

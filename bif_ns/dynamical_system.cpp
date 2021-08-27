@@ -22,8 +22,9 @@ dynamical_system::dynamical_system(nlohmann::json json) {
   Eigen::Map<Eigen::VectorXd> params(params_arr.data(), params_arr.size());
   this->params = params;
 
-  mu = json["sigma"];
-  
+  mu = Eigen::dcomplex(json["sigma"], json["omega"]);
+  theta = std::arg(mu);
+
   xk = std::vector<Eigen::VectorXd>(period + 1, Eigen::VectorXd::Zero(xdim));
   dTdx =
       std::vector<Eigen::MatrixXd>(period, Eigen::MatrixXd::Zero(xdim, xdim));

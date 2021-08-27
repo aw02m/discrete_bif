@@ -25,8 +25,9 @@ public:
   Eigen::VectorXd params;
 
   Eigen::VectorXcd eigvals;
-  double mu;
-  
+  Eigen::dcomplex mu;
+  double theta;
+
   std::vector<Eigen::VectorXd> xk;
 
   std::vector<Eigen::MatrixXd> dTdx;
@@ -44,7 +45,7 @@ public:
   std::vector<Eigen::MatrixXd> dTldxdx;
   Eigen::MatrixXd dTldxdlambda;
 
-  Eigen::MatrixXd chara_poly;
+  Eigen::MatrixXcd chara_poly;
 };
 
 #endif

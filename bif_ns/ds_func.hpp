@@ -18,7 +18,8 @@ Eigen::MatrixXd dTldxdlambda(const dynamical_system &ds);
 std::vector<Eigen::MatrixXd> dTldxdx_numeric(dynamical_system &ds);
 Eigen::MatrixXd dTldxdlambda_numeric(dynamical_system &ds);
 
-double det_derivative(const Eigen::MatrixXd &A, const Eigen::MatrixXd &dA,
-                      const dynamical_system &ds);
+Eigen::dcomplex det_derivative(const Eigen::MatrixXcd &A,
+                               const Eigen::MatrixXcd &dA,
+                               const dynamical_system &ds);
 
 #endif
