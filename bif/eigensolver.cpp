@@ -1,4 +1,5 @@
 #include "eigensolver.hpp"
+#include "dynamical_system.hpp"
 
 Eigen::VectorXcd eigenvalues(const dynamical_system &ds) {
   Eigen::VectorXcd eigvals(ds.xdim);
