@@ -1,5 +1,6 @@
 #include "newton.hpp"
-#include <chrono>
+#include "ds_func.hpp"
+#include "dynamical_system.hpp"
 
 void newton(dynamical_system &ds) {
   Eigen::VectorXd vp(ds.xdim + 1);

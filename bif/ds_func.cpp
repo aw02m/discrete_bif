@@ -1,4 +1,7 @@
 #include "ds_func.hpp"
+#include "ds_derivatives.hpp"
+#include "dynamical_system.hpp"
+#include "eigensolver.hpp"
 
 void store_state(const Eigen::VectorXd &vp, dynamical_system &ds) {
   Eigen::VectorXd x = vp(Eigen::seqN(0, ds.xdim));

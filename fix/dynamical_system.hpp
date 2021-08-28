@@ -2,6 +2,7 @@
 #define DYNAMICAL_SYSTEM_HPP_
 
 #include "sys_common.hpp"
+#include <nlohmann/json.hpp>
 
 class dynamical_system {
 public:
@@ -34,6 +35,8 @@ public:
   std::vector<Eigen::MatrixXd> dTdxdlambda;
 
   Eigen::MatrixXd dTldx;
+
+  Eigen::VectorXcd eigvals;
 };
 
 #endif

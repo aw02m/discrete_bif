@@ -1,5 +1,6 @@
 #include "newton.hpp"
-#include <chrono>
+#include "ds_func.hpp"
+#include "dynamical_system.hpp"
 
 void newton(dynamical_system &ds) {
   Eigen::VectorXd vp(ds.xdim);
@@ -9,6 +10,7 @@ void newton(dynamical_system &ds) {
   Eigen::MatrixXd J(ds.xdim, ds.xdim);
   Eigen::VectorXcd eigvals(ds.xdim);
   double norm;
+  Eigen::IOFormat Comma(8, 0, ", ", "\n", "[", "]");
 
   for (int p = 0; p < ds.inc_iter; p++) {
     auto start = std::chrono::system_clock::now();
@@ -29,16 +31,16 @@ void newton(dynamical_system &ds) {
                   << std::endl;
         std::cout << p << " : converged (iter = " << i + 1 << ", ";
         std::cout << "time = " << msec << "[msec])" << std::endl;
-        std::cout << "params : " << ds.params.transpose() << std::endl;
-        std::cout << "x0     : " << vn(Eigen::seqN(0, ds.xdim)).transpose()
+        std::cout << "params : " << ds.params.transpose().format(Comma)
                   << std::endl;
-        eigvals =
-            Eigen::EigenSolver<Eigen::MatrixXd>(ds.dTldx).eigenvalues();
+        std::cout << "x0     : "
+                  << vn(Eigen::seqN(0, ds.xdim)).transpose().format(Comma)
+                  << std::endl;
         std::cout << "(Re(μ), Im(μ)), abs(μ), arg(μ) :" << std::endl;
         for (int k = 0; k < ds.xdim; k++) {
-          std::cout << eigvals(k) << ", ";
-          std::cout << std::abs(eigvals(k)) << ", ";
-          std::cout << std::arg(eigvals(k)) * (180 / EIGEN_PI) << std::endl;
+          std::cout << ds.eigvals(k) << ", ";
+          std::cout << std::abs(ds.eigvals(k)) << ", ";
+          std::cout << std::arg(ds.eigvals(k)) * (180 / EIGEN_PI) << std::endl;
         }
         std::cout << "**************************************************"
                   << std::endl;

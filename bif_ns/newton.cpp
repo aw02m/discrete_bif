@@ -1,5 +1,6 @@
 #include "newton.hpp"
-#include <chrono>
+#include "ds_func.hpp"
+#include "dynamical_system.hpp"
 
 void newton(dynamical_system &ds) {
   Eigen::VectorXd vp(ds.xdim + 2);
@@ -11,6 +12,7 @@ void newton(dynamical_system &ds) {
   Eigen::VectorXd F(ds.xdim + 2);
   Eigen::MatrixXd J(ds.xdim + 2, ds.xdim + 2);
   double norm;
+  Eigen::IOFormat Comma(8, 0, ", ", "\n", "[", "]");
 
   for (int p = 0; p < ds.inc_iter; p++) {
     auto start = std::chrono::system_clock::now();
@@ -30,9 +32,10 @@ void newton(dynamical_system &ds) {
                   << std::endl;
         std::cout << p << " : converged (iter = " << i + 1 << ", ";
         std::cout << "time = " << msec << "[msec])" << std::endl;
-        std::cout << "params : " << ds.params.transpose() << std::endl;
+        std::cout << "params : " << ds.params.transpose().format(Comma)
+                  << std::endl;
         std::cout << "x0     : "
-                  << vn(Eigen::seqN(0, ds.xdim)).transpose()
+                  << vn(Eigen::seqN(0, ds.xdim)).transpose().format(Comma)
                   << std::endl;
         std::cout << "(Re(μ), Im(μ)), abs(μ), arg(μ) :" << std::endl;
         for (int k = 0; k < ds.xdim; k++) {

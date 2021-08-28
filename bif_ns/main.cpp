@@ -1,5 +1,5 @@
-#include "dynamical_system.hpp"
 #include "newton.hpp"
+#include "dynamical_system.hpp"
 #include <nlohmann/json.hpp>
 
 int main(int argc, char *argv[]) {

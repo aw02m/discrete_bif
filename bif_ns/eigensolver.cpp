@@ -1,4 +1,5 @@
 #include "eigensolver.hpp"
+#include "dynamical_system.hpp"
 
 Eigen::VectorXcd eigenvalues(const dynamical_system &ds) {
   Eigen::VectorXcd eigvals(ds.xdim);
@@ -15,7 +16,7 @@ Eigen::dcomplex bifeigvals(const dynamical_system &ds) {
 
   for (int i = 1; i < ds.xdim; i++) {
     delta_buf = std::abs(ds.eigvals(i)) - 1.0;
-    if (delta_buf < delta){
+    if (delta_buf < delta) {
       target_index = i;
     }
   }
