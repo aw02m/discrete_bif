@@ -138,13 +138,6 @@ Eigen::MatrixXd dTldxdlambda(const dynamical_system &ds) {
     ret = temp + ds.dTdx[i] * ret + ds.dTdxdlambda[i] * ds.bkwd_prod[i];
   }
 
-  // temp.col(0) = ds.dTdxdx[1][0] * ds.dTdlambda[0];
-  // temp.col(1) = ds.dTdxdx[1][1] * ds.dTdlambda[0];
-
-  // ret = temp + ds.dTdxdlambda[1];
-  // ret *= ds.dTdx[0];
-  // ret += ds.dTdx[1] * ds.dTdxdlambda[0];
-
   return ret;
 }
 

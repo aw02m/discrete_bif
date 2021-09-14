@@ -184,7 +184,7 @@ std::vector<Eigen::MatrixXd> dTdxdx(const Eigen::VectorXd &x,
 
 Eigen::MatrixXd dTdxdlambda(const Eigen::VectorXd &x,
                             const dynamical_system &ds) {
-  Eigen::MatrixXd ret = Eigen::MatrixXd::Identity(ds.xdim, ds.xdim);
+  Eigen::MatrixXd ret = Eigen::MatrixXd::Zero(ds.xdim, ds.xdim);
   double b = ds.params(1);
   unsigned int m = ds.params(4);
 
