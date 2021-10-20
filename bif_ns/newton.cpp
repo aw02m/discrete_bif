@@ -1,25 +1,23 @@
 #include "newton.hpp"
-#include "ds_func.hpp"
 #include "dynamical_system.hpp"
 
 void newton(dynamical_system &ds) {
   Eigen::VectorXd vp(ds.xdim + 2);
-  // vp << ds.x0 << ds.params(ds.var_param);
   vp(Eigen::seqN(0, ds.xdim)) = ds.x0;
-  vp(ds.xdim) = ds.params(ds.var_param);
+  vp(ds.xdim) = ds.p(ds.var_param);
   vp(ds.xdim + 1) = ds.theta;
   Eigen::VectorXd vn(ds.xdim + 2);
   Eigen::VectorXd F(ds.xdim + 2);
   Eigen::MatrixXd J(ds.xdim + 2, ds.xdim + 2);
   double norm;
-  Eigen::IOFormat Comma(8, 0, ", ", "\n", "[", "]");
+  Eigen::IOFormat Comma(Eigen::FullPrecision, 0, ", ", "\n", "[", "]");
 
   for (int p = 0; p < ds.inc_iter; p++) {
     auto start = std::chrono::system_clock::now();
     for (int i = 0; i < ds.max_iter; i++) {
-      store_state(vp, ds);
-      F = func_newton(ds);
-      J = jac_newton(ds);
+      auto FJ = ds.newton_FJ(vp);
+      F = std::get<0>(FJ);
+      J = std::get<1>(FJ);
       vn = Eigen::ColPivHouseholderQR<Eigen::MatrixXd>(J).solve(-F) + vp;
 
       norm = (vn - vp).norm();
@@ -32,7 +30,7 @@ void newton(dynamical_system &ds) {
                   << std::endl;
         std::cout << p << " : converged (iter = " << i + 1 << ", ";
         std::cout << "time = " << msec << "[msec])" << std::endl;
-        std::cout << "params : " << ds.params.transpose().format(Comma)
+        std::cout << "params : " << ds.p.transpose().format(Comma)
                   << std::endl;
         std::cout << "x0     : "
                   << vn(Eigen::seqN(0, ds.xdim)).transpose().format(Comma)
@@ -46,7 +44,7 @@ void newton(dynamical_system &ds) {
         std::cout << "**************************************************"
                   << std::endl;
         vp = vn;
-        ds.params(ds.var_param) = vn(ds.xdim);
+        ds.p(ds.var_param) = vn(ds.xdim);
         ds.theta = vn(ds.xdim + 1);
         break;
       } else if (norm >= ds.explode) {
@@ -60,9 +58,9 @@ void newton(dynamical_system &ds) {
       }
 
       vp = vn;
-      ds.params(ds.var_param) = vn(ds.xdim);
+      ds.p(ds.var_param) = vn(ds.xdim);
       ds.theta = vn(ds.xdim + 1);
     }
-    ds.params[ds.inc_param] += ds.delta_inc;
+    ds.p[ds.inc_param] += ds.delta_inc;
   }
 }
