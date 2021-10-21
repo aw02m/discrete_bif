@@ -1,0 +1,42 @@
+{
+    "out_path": "../output/out",
+    "fix_mode": false,
+    "xrange": [
+        -3.0,
+        3
+    ],
+    "yrange": [
+        -3.0,
+        3.0
+    ],
+    "alpha": 0.25,
+    "break": 16,
+    "x0": [
+        -0.7562134639782205,
+        0.8678720384681493
+    ],
+    "params": [
+        4.6640000000000086,
+        1,
+        0.005,
+        1.0,
+        3
+    ],
+    "theta": 3.14,
+    "dparams": [
+        0.01,
+        0.1,
+        0.1,
+        0.1
+    ],
+    "period": 2,
+    "inc_param": 3,
+    "var_param": 0,
+    "delta_inc": -0.0001,
+    "inc_iter": 10,
+    "max_iter": 100,
+    "numerical_diff": false,
+    "dif_strip": 1e-08,
+    "eps": 1e-08,
+    "explode": 1000
+}

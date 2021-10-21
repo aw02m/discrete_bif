@@ -21,31 +21,53 @@ public:
   double dif_strip;
   double eps;
   double explode;
+  bool fix_mode;
+
+  std::string out_path;
 
   Eigen::VectorXd x0;
   Eigen::VectorXd params;
+  Eigen::VectorXd p;
 
   Eigen::VectorXcd eigvals;
-  double mu;
-  
-  std::vector<Eigen::VectorXd> xk;
+  Eigen::dcomplex mu;
+  double theta;
 
-  std::vector<Eigen::MatrixXd> dTdx;
-  std::vector<Eigen::VectorXd> dTdlambda;
-  std::vector<std::vector<Eigen::MatrixXd>> dTdxdx;
-  std::vector<Eigen::MatrixXd> dTdxdlambda;
+  Eigen::VectorXd T;
+  Eigen::MatrixXd dTdx;
+  Eigen::VectorXd dTdlambda;
+  std::vector<Eigen::MatrixXd> dTdxdx;
+  Eigen::MatrixXd dTdxdlambda;
+
+  std::vector<Eigen::VectorXd> xk;
+  std::vector<Eigen::MatrixXd> dTdx_arr;
+  std::vector<Eigen::VectorXd> dTdlambda_arr;
+  std::vector<std::vector<Eigen::MatrixXd>> dTdxdx_arr;
+  std::vector<Eigen::MatrixXd> dTdxdlambda_arr;
 
   // these are common terms of second derivatives.
-  std::vector<Eigen::MatrixXd> frwd_prod;
-  std::vector<Eigen::MatrixXd> bkwd_prod;
-  std::vector<Eigen::VectorXd> dTkdlambda;
+  std::vector<Eigen::MatrixXd> frwd_prod_arr;
+  std::vector<Eigen::MatrixXd> bkwd_prod_arr;
+  std::vector<Eigen::VectorXd> dTkdlambda_arr;
 
   Eigen::MatrixXd dTldx;
   Eigen::MatrixXd dTldlambda;
   std::vector<Eigen::MatrixXd> dTldxdx;
   Eigen::MatrixXd dTldxdlambda;
 
-  Eigen::MatrixXd chara_poly;
+  Eigen::MatrixXcd chara_poly;
+
+  void function(const Eigen::VectorXd &x);
+  Eigen::dcomplex det_derivative(const Eigen::MatrixXcd &A, const Eigen::MatrixXcd &dA);
+
+  void store_states(const Eigen::VectorXd &v);
+  void store_states_fix(const Eigen::VectorXd &v);
+  Eigen::VectorXd newton_F();
+  Eigen::MatrixXd newton_J();
+  Eigen::VectorXd newton_fix_F();
+  Eigen::MatrixXd newton_fix_J();
+  std::tuple<Eigen::VectorXd, Eigen::MatrixXd>
+  newton_FJ(const Eigen::VectorXd &v);
 };
 
 #endif
