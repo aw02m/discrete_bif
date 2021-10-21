@@ -1,3 +1,5 @@
 project(discrete_bif CXX)
-include_directories("C:\\Program Files (x86)\\Eigen3\\include")
-add_executable(main main.cpp dynamical_system.cpp eigensolver.cpp ds_derivatives.cpp ds_func.cpp newton.cpp)
+cmake_minimum_required(VERSION 3.21)
+# include_directories("C:\\Program Files (x86)\\Eigen3\\include")
+add_executable(main main.cpp dynamical_system.cpp newton.cpp sys_func.cpp)
+target_compile_options(main PUBLIC -O3 -mtune=native -march=native -mfpmath=both)
