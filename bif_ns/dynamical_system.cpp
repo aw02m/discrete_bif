@@ -12,6 +12,9 @@ dynamical_system::dynamical_system(nlohmann::json json) {
   dif_strip = json["dif_strip"];
   eps = json["eps"];
   explode = json["explode"];
+  fix_mode = json["fix_mode"];
+
+  out_path = json["out_path"];
 
   /* These json array should be casted to the STL container type*/
   std::vector<double> fixed_arr = json["x0"];
@@ -22,8 +25,9 @@ dynamical_system::dynamical_system(nlohmann::json json) {
   Eigen::Map<Eigen::VectorXd> params(params_arr.data(), params_arr.size());
   this->p = params;
 
-  mu = Eigen::dcomplex(json["sigma"], json["omega"]);
-  theta = std::arg(mu);
+  theta = json["theta"];
+  mu = Eigen::dcomplex(std::cos(theta), std::sin(theta));
+  // mu = Eigen::dcomplex(json["sigma"], json["omega"]);
 
   T = Eigen::VectorXd::Zero(xdim);
   dTdx = Eigen::MatrixXd::Zero(xdim, xdim);
@@ -54,10 +58,12 @@ dynamical_system::dynamical_system(nlohmann::json json) {
 }
 
 void dynamical_system::store_states(const Eigen::VectorXd &v) {
-  Eigen::VectorXd x = v(Eigen::seqN(0, xdim));
   Eigen::MatrixXd I = Eigen::MatrixXd::Identity(xdim, xdim);
 
-  xk[0] = x;
+  xk[0] = v(Eigen::seqN(0, xdim));
+  p(var_param) = v(xdim);
+  theta = v(xdim + 1);
+
   for (int i = 0; i < period; i++) {
     function(xk[i]);
     xk[i + 1] = T;
@@ -117,20 +123,6 @@ void dynamical_system::store_states(const Eigen::VectorXd &v) {
   chara_poly = dTldx - mu * I;
 }
 
-Eigen::dcomplex dynamical_system::det_derivative(const Eigen::MatrixXcd &A,
-                                                 const Eigen::MatrixXcd &dA) {
-  Eigen::MatrixXcd temp(xdim, xdim);
-  Eigen::dcomplex ret(0, 0);
-
-  for (int i = 0; i < xdim; i++) {
-    temp = A;
-    temp.col(i) = dA.col(i).cast<Eigen::dcomplex>();
-    ret += temp.determinant();
-  }
-
-  return ret;
-}
-
 Eigen::VectorXd dynamical_system::newton_F() {
   Eigen::VectorXd F(xdim + 2);
   Eigen::MatrixXd I = Eigen::MatrixXd::Identity(xdim, xdim);
@@ -170,8 +162,77 @@ Eigen::MatrixXd dynamical_system::newton_J() {
   return J;
 }
 
+Eigen::VectorXd dynamical_system::newton_fix_F() {
+  Eigen::VectorXd F(xdim);
+  Eigen::MatrixXd I = Eigen::MatrixXd::Identity(xdim, xdim);
+
+  F(Eigen::seqN(0, xdim)) = xk[period] - xk[0];
+
+  return F;
+}
+
+Eigen::MatrixXd dynamical_system::newton_fix_J() {
+  Eigen::MatrixXd J(xdim, xdim);
+  Eigen::MatrixXd I = Eigen::MatrixXd::Identity(xdim, xdim);
+
+  J(Eigen::seqN(0, xdim), Eigen::seqN(0, xdim)) = dTldx - I;
+
+  return J;
+}
+
+void dynamical_system::store_states_fix(const Eigen::VectorXd &v) {
+  Eigen::MatrixXd I = Eigen::MatrixXd::Identity(xdim, xdim);
+
+  xk[0] = v(Eigen::seqN(0, xdim));
+
+  for (int i = 0; i < period; i++) {
+    function(xk[i]);
+    xk[i + 1] = T;
+    dTdx_arr[i] = dTdx;
+  }
+
+  // dTldx
+  dTldx = Eigen::MatrixXd::Identity(xdim, xdim);
+  for (int i = period - 1; i >= 0; i--) {
+    dTldx *= dTdx_arr[i];
+  }
+
+  // Find the argument <theta> of the characteristic constant
+  // whose absolute value is closest to 1.
+  eigvals = Eigen::EigenSolver<Eigen::MatrixXd>(dTldx).eigenvalues();
+  unsigned int target_index = 0;
+  double delta = std::abs(eigvals(0)) - 1.0;
+  double delta_buf = 0;
+  for (int i = 1; i < xdim; i++) {
+    delta_buf = std::abs(eigvals(i)) - 1.0;
+    if (delta_buf < delta) {
+      target_index = i;
+    }
+  }
+  theta = std::arg(eigvals(target_index));
+}
+
 std::tuple<Eigen::VectorXd, Eigen::MatrixXd>
 dynamical_system::newton_FJ(const Eigen::VectorXd &v) {
-  store_states(v);
-  return std::make_tuple(newton_F(), newton_J());
+  if (!fix_mode) {
+    store_states(v);
+    return std::make_tuple(newton_F(), newton_J());
+  } else {
+    store_states_fix(v);
+    return std::make_tuple(newton_fix_F(), newton_fix_J());
+  }
+}
+
+Eigen::dcomplex dynamical_system::det_derivative(const Eigen::MatrixXcd &A,
+                                                 const Eigen::MatrixXcd &dA) {
+  Eigen::MatrixXcd temp(xdim, xdim);
+  Eigen::dcomplex ret(0, 0);
+
+  for (int i = 0; i < xdim; i++) {
+    temp = A;
+    temp.col(i) = dA.col(i).cast<Eigen::dcomplex>();
+    ret += temp.determinant();
+  }
+
+  return ret;
 }

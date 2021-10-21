@@ -21,6 +21,9 @@ public:
   double dif_strip;
   double eps;
   double explode;
+  bool fix_mode;
+
+  std::string out_path;
 
   Eigen::VectorXd x0;
   Eigen::VectorXd params;
@@ -58,8 +61,11 @@ public:
   Eigen::dcomplex det_derivative(const Eigen::MatrixXcd &A, const Eigen::MatrixXcd &dA);
 
   void store_states(const Eigen::VectorXd &v);
+  void store_states_fix(const Eigen::VectorXd &v);
   Eigen::VectorXd newton_F();
   Eigen::MatrixXd newton_J();
+  Eigen::VectorXd newton_fix_F();
+  Eigen::MatrixXd newton_fix_J();
   std::tuple<Eigen::VectorXd, Eigen::MatrixXd>
   newton_FJ(const Eigen::VectorXd &v);
 };
