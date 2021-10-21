@@ -1,5 +1,6 @@
-#include "newton.hpp"
 #include "dynamical_system.hpp"
+#include "newton.hpp"
+#include <filesystem>
 #include <nlohmann/json.hpp>
 
 int main(int argc, char *argv[]) {
@@ -32,6 +33,15 @@ int main(int argc, char *argv[]) {
             << std::endl;
 
   newton(ds);
+
+  json["x0"] = ds.x0;
+  json["params"] = ds.p;
+  json["theta"] = ds.theta;
+  std::filesystem::path out_path = argv[1];
+  std::ofstream json_out;
+  json_out.open("out.json", std::ios::out);
+  json_out << json.dump(4);
+  json_out.close();
 
   return 0;
 }
