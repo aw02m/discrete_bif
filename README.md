@@ -3,10 +3,10 @@ Bifurcation analysis program for difference equations (descrete dynamical system
 See aw02m/bifurcation_theory for the calcuration algorythm.
 
 # Changelog
-Aug/22/2021 : PD，G追跡に対応(initial commit)
-Aug/27/2021 : NS追跡に対応，数値微分が選択可能
-Oct/21/2021 : fixとbifの統合，json出力の自動化，数値微分が一時的に使用不可
-Oct/22/2021 : 二階変分の数値微分が復活
+Aug/22/2021 : PD，G追跡に対応(initial commit)  
+Aug/27/2021 : NS追跡に対応，数値微分が選択可能  
+Oct/21/2021 : fixとbifの統合，json出力の自動化，数値微分が一時的に使用不可  
+Oct/22/2021 : 二階変分の数値微分が復活  
 
 # descrete_bif
 離散力学系(差分方程式)の分岐解析ツールです．  
