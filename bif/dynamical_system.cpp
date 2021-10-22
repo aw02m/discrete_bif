@@ -15,6 +15,7 @@ dynamical_system::dynamical_system(nlohmann::json json) {
   fix_mode = json["fix_mode"];
 
   out_path = json["out_path"];
+  json_out_path = json["json_out_path"];
 
   /* These json array should be casted to the STL container type*/
   std::vector<double> fixed_arr = json["x0"];

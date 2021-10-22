@@ -23,6 +23,10 @@ public:
   std::vector<double> dparams;
   unsigned int max_plot;
 
+  std::string out_path;
+  std::string json_out_path;
+  std::vector<Eigen::VectorXd> trajectory_set;
+
   Eigen::VectorXd x0;
   Eigen::VectorXd p;
 

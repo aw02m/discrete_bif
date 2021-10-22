@@ -1,5 +1,6 @@
 {
     "out_path": "../output/out",
+    "json_out_path": "out.json",
     "fix_mode": false,
     "xrange": [
         -3.0,
@@ -9,8 +10,7 @@
         -3.0,
         3.0
     ],
-    "alpha": 0.25,
-    "break": 16,
+    "max_plot": 10000,
     "x0": [
         -0.7562134639782205,
         0.8678720384681493

@@ -24,6 +24,7 @@ public:
   bool fix_mode;
 
   std::string out_path;
+  std::string json_out_path;
 
   Eigen::VectorXd x0;
   Eigen::VectorXd params;

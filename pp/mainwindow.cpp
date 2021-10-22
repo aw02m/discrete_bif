@@ -52,6 +52,7 @@ void MainWindow::ppSlot() {
 
   for (unsigned int i = 0; i < ds.max_plot; i++) {
     x = ds.function(x);
+    ds.trajectory_set[i] = x;
     ds.QCPGsol << QCPGraphData(x(ds.axis[0]), x(ds.axis[1]));
   }
   trajectory->data()->set(ds.QCPGsol, true);
