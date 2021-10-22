@@ -61,7 +61,7 @@ void newton(dynamical_system &ds) {
         for (int k = 0; k < ds.xdim; k++) {
           std::cout << ds.eigvals(k) << ", ";
           std::cout << std::abs(ds.eigvals(k)) << ", ";
-          std::cout << std::arg(ds.eigvals(k)) * (180 / EIGEN_PI) << std::endl;
+          std::cout << std::arg(ds.eigvals(k)) << std::endl;
         }
         std::cout << "**************************************************"
                   << std::endl;

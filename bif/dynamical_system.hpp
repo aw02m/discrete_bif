@@ -61,9 +61,10 @@ public:
   Eigen::dcomplex det_derivative(const Eigen::MatrixXcd &A, const Eigen::MatrixXcd &dA);
 
   void store_states(const Eigen::VectorXd &v);
-  void store_states_fix(const Eigen::VectorXd &v);
+  void store_states_numeric(const Eigen::VectorXd &v);
   Eigen::VectorXd newton_F();
   Eigen::MatrixXd newton_J();
+  void store_states_fix(const Eigen::VectorXd &v);
   Eigen::VectorXd newton_fix_F();
   Eigen::MatrixXd newton_fix_J();
   std::tuple<Eigen::VectorXd, Eigen::MatrixXd>

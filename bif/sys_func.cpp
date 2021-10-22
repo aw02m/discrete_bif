@@ -12,8 +12,8 @@ void dynamical_system::function(const Eigen::VectorXd &x) {
       std::vector<Eigen::MatrixXd>(xdim, Eigen::MatrixXd::Zero(xdim, xdim));
   /* End Zero Initialization */
 
-  double a, b, c, d;
-  unsigned int m;
+  static double a, b, c, d;
+  static unsigned int m;
   a = p(0);
   b = p(1);
   c = p(2);
