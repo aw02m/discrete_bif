@@ -42,26 +42,18 @@ ppは相平面をリアルタイムに描画します．(Original:Tetsushi Ueta)
 * `[space]` : 描画をリセットします．
 * その他の機能についてはProf. Uetaのオリジナルリポジトリを参照ください．
 
-## fix概要
-fixはppで取得した固定点情報をもとに，一つの指定パラメタを変化させながらNewton法を用いて固定点計算を行います．
+## bif概要
+`bif`は分岐点の近似値をもとに分岐集合を計算します．
+本プログラムはPeriod-doubling; I(PD), Tangent; G, Neimark-Sacker; NSの局所分岐計算が可能です．
+Newton法の目的関数はNeimark-Sacker分岐条件ですが，I,GはNS条件に含まれます．
+後述の固定点計算モードを指定することで固定点の追跡も可能です．
 
 ### 動作環境
 * Eigen-3.4-rc1 : 線形代数ライブラリです．現在のstableに実装されていない関数を使用しているため，gitリポジトリの最新バージョンを利用してください．Arch Linuxなひとは`# pamac build eigen-git`でインストールされます．
 * nlohmann-3.10.1 : jsonライブラリ．
 * cmake : Makefileの自動生成に用います．
 
-### 入力ファイル概要
-
-
-### 使用法
-
-
-## bif概要
-`bif`は`fix`で求めた分岐点の近似値をもとに分岐集合を計算します．`bif`, `bif_ns`にそれぞれプログラムが別れていますが，中身はほとんど一緒です．
-`bif`はPeriod-doubling bifurcation; PD及びTangent bifurcation; Gの計算が可能です．
-`bif_ns`はNeimark-Sacker; NS分岐用ですが，アルゴリズムの特性上PDもGも計算できます．
-
-### bif, bif_ns入力ファイル概要
+### bif入力ファイル概要
 * "fix_mode" : trueの場合固定点追跡を行います．
 * "x0" : ppにてjsonファイルを出力した際に更新されます．この値が固定点計算の初期値として使用されます．
 * "theta" : 分岐点特性定数の偏角を与えます．
