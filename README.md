@@ -2,8 +2,11 @@ Bifurcation analysis program for difference equations (descrete dynamical system
 
 See aw02m/bifurcation_theory for the calcuration algorythm.
 
-更新しました．(Oct/21/2021; fixとbifの統合，json出力の自動化)
-現在数値微分は使用不可です．そのうち実装予定．
+# Changelog
+Aug/22/2021 : PD，G追跡に対応(initial commit)
+Aug/27/2021 : NS追跡に対応，数値微分が選択可能
+Oct/21/2021 : fixとbifの統合，json出力の自動化，数値微分が一時的に使用不可
+Oct/22/2021 : 二階変分の数値微分が復活
 
 # descrete_bif
 離散力学系(差分方程式)の分岐解析ツールです．  
@@ -70,11 +73,12 @@ fixはppで取得した固定点情報をもとに，一つの指定パラメタ
 * "max_iter" : Newton法の最大ステップを指定します．Newton法は通常数回の繰り返しで収束するため，10~32の整数値を指定します．
 * "eps" : Newton法の収束判定を与えます．誤差が指定数値以下になった場合に計算が終了します．10^-8くらい．
 * "numerical_diff" : `bool`値を指定します．`true`の場合2階変分は数値微分により計算され，`false`の場合は代数的に求められます．
-* "dif_strip" : 数値微分を用いる際の微小量を指定します．本バージョンでは2階微分に一部数値微分が使用されています．
+* "dif_strip" : 数値微分を用いる際の微小量を指定します．`numerical_diff`がfalseの場合は無視されます．
 
 ### 使用法
 `./main [input json file]`にて実行．コンパイルは`mkdir build`の後`bif/build`ディレクトリの中で`cmake ../`するとMakefileが自動で作成されますので，その後`make`で実行ファイルが生成されます．
 力学系の写像及びその微分は`sys_func.cpp`に記述し，それ以外のC++ファイルは変更しないでください．
+固定点計算の場合は`T`と`dTdx`の定義のみ，数値微分を用いる場合は`T`, `dTdx`, `dTdlambda`の定義のみでOK．
 なお，`Eigen`配列へのアクセスは`[i]`ではなく`(i)`を用いてください．こっちのほうが早いらしいです．
 計算に成功すると固定点座標，パラメタ値，特性定数，特性定数のノルム・偏角が出力されます．
 分岐計算の最終点はカレントディレクトリにout.jsonとして書き出されます．
