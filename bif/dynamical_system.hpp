@@ -34,22 +34,21 @@ public:
   Eigen::dcomplex mu;
   double theta;
 
-  Eigen::VectorXd T;
-  Eigen::MatrixXd dTdx;
-  Eigen::VectorXd dTdlambda;
-  std::vector<Eigen::MatrixXd> dTdxdx;
-  Eigen::MatrixXd dTdxdlambda;
+  Eigen::VectorXd f;
+  Eigen::MatrixXd dfdx;
+  Eigen::VectorXd dfdlambda;
+  std::vector<Eigen::MatrixXd> dfdxdx;
+  Eigen::MatrixXd dfdxdlambda;
 
   std::vector<Eigen::VectorXd> xk;
-  std::vector<Eigen::MatrixXd> dTdx_arr;
-  std::vector<Eigen::VectorXd> dTdlambda_arr;
-  std::vector<std::vector<Eigen::MatrixXd>> dTdxdx_arr;
-  std::vector<Eigen::MatrixXd> dTdxdlambda_arr;
-
-  // these are common terms of second derivatives.
-  std::vector<Eigen::MatrixXd> frwd_prod_arr;
-  std::vector<Eigen::MatrixXd> bkwd_prod_arr;
-  std::vector<Eigen::VectorXd> dTkdlambda_arr;
+  unsigned int size_dphidx;
+  unsigned int size_dphidlambda;
+  unsigned int size_dphidxdx;
+  unsigned int size_dphidxdlambda;
+  Eigen::MatrixXd dphidx;
+  Eigen::VectorXd dphidlambda;
+  std::vector<Eigen::MatrixXd> dphidxdx;
+  Eigen::MatrixXd dphidxdlambda;
 
   Eigen::MatrixXd dTldx;
   Eigen::MatrixXd dTldlambda;
@@ -58,8 +57,9 @@ public:
 
   Eigen::MatrixXcd chara_poly;
 
-  void function(const Eigen::VectorXd &x);
-  Eigen::dcomplex det_derivative(const Eigen::MatrixXcd &A, const Eigen::MatrixXcd &dA);
+  void function([[maybe_unused]] int k, Eigen::VectorXd &x);
+  Eigen::dcomplex det_derivative(const Eigen::MatrixXcd &A,
+                                 const Eigen::MatrixXcd &dA);
 
   void store_states(const Eigen::VectorXd &v);
   void store_states_numeric(const Eigen::VectorXd &v);

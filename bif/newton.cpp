@@ -46,8 +46,8 @@ void newton(dynamical_system &ds) {
         auto dur = end - start;
         auto msec =
             std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
-        std::cout << "**************************************************"
-                  << std::endl;
+        // std::cout << "**************************************************"
+        //           << std::endl;
         std::cout << std::setprecision(16);
         std::cout << p << " : converged (iter = " << i + 1 << ", ";
         std::cout << "time = " << msec << "[msec])" << std::endl;

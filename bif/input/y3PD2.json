@@ -32,11 +32,11 @@
     "period": 2,
     "inc_param": 3,
     "var_param": 0,
-    "delta_inc": -0.0001,
-    "inc_iter": 10,
+    "delta_inc": -0.001,
+    "inc_iter": 10000,
     "max_iter": 100,
     "numerical_diff": false,
-    "dif_strip": 1e-08,
+    "dif_strip": 1e-04,
     "eps": 1e-08,
     "explode": 1000
 }
