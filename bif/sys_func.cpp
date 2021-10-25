@@ -61,23 +61,33 @@ void dynamical_system::function([[maybe_unused]] int k, Eigen::VectorXd &x) {
   /******************************************************/
   unsigned int counter = xdim;
   // variational state (transform to matrix shape for easy producting)
-  Eigen::MatrixXd state_dphidx = x(Eigen::seqN(counter, size_dphidx));
-  state_dphidx.resize(xdim, xdim);
-  counter += size_dphidx;
-  Eigen::VectorXd state_dphidlambda = x(Eigen::seqN(counter, size_dphidlambda));
-  counter += size_dphidlambda;
+  Eigen::MatrixXd state_dphidx(xdim, xdim);
+  Eigen::VectorXd state_dphidlambda(xdim);
   std::vector<Eigen::MatrixXd> state_dphidxdx(
       xdim, Eigen::MatrixXd::Zero(xdim, xdim));
-  Eigen::MatrixXd temp;
-  for (int i = 0; i < xdim; i++) {
-    temp = x(Eigen::seqN(counter + size_dphidx * i, size_dphidx));
-    temp.resize(xdim, xdim);
-    state_dphidxdx[i] = temp;
-    temp.resize(size_dphidx, 1);
+  Eigen::MatrixXd state_dphidxdlambda(xdim, xdim);
+
+  state_dphidx = x(Eigen::seqN(counter, size_dphidx));
+  state_dphidx.resize(xdim, xdim);
+  counter += size_dphidx;
+
+  state_dphidlambda = x(Eigen::seqN(counter, size_dphidlambda));
+  counter += size_dphidlambda;
+
+// numerical_diff does not require states of 2nd derivatives.
+  if (!numerical_diff) {
+    Eigen::MatrixXd temp;
+    for (int i = 0; i < xdim; i++) {
+      temp = x(Eigen::seqN(counter + size_dphidx * i, size_dphidx));
+      temp.resize(xdim, xdim);
+      state_dphidxdx[i] = temp;
+      temp.resize(size_dphidx, 1);
+    }
+    counter += size_dphidxdx;
+
+    Eigen::MatrixXd state_dphidxdlambda =
+        x(Eigen::seqN(counter, size_dphidxdlambda));
   }
-  counter += size_dphidxdx;
-  Eigen::MatrixXd state_dphidxdlambda =
-      x(Eigen::seqN(counter, size_dphidxdlambda));
 
   counter = 0;
 

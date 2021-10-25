@@ -6,7 +6,8 @@ See aw02m/bifurcation_theory for the calcuration algorythm.
 Aug/22/2021 : PD，G追跡に対応(initial commit)  
 Aug/27/2021 : NS追跡に対応，数値微分が選択可能  
 Oct/21/2021 : fixとbifの統合，json出力の自動化，数値微分が一時的に使用不可  
-Oct/22/2021 : 二階変分の数値微分が復活，ppをC++(QT+QCustomPlot)に変更 
+Oct/22/2021 : 二階変分の数値微分が復活，ppをC++(QT+QCustomPlot)に変更  
+Oct/25/2021 : 変分方程式の記述を"CによるカオスCG"形式に変更(構造が`aw02m/autonomous_bif`とほぼ同一化)
 
 # descrete_bif
 離散力学系(差分方程式)の分岐解析ツールです．  
