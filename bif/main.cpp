@@ -33,6 +33,7 @@ int main(int argc, char *argv[]) {
 
   newton(ds);
 
+  // output json for latest state
   json["x0"] = ds.x0;
   json["params"] = ds.p;
   json["theta"] = ds.theta;
