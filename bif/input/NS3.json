@@ -1,7 +1,7 @@
 {
     "out_path": "../output/out",
     "json_out_path": "out.json",
-    "mode": 0,
+    "mode": 1,
     "xrange": [
         -3.0,
         3
@@ -12,30 +12,31 @@
     ],
     "max_plot": 10000,
     "x0": [
-        -0.7562134639782205,
-        0.8678720384681493
+        0.8809452552156803,
+        1.8743516068418566
     ],
     "params": [
-        4.6640000000000086,
-        1,
-        0.005,
-        1.0,
+        -5.321,
+        1.02,
+        1.04,
+        0.46999999999999953,
         3
     ],
     "dparams": [
         0.01,
         0.1,
         0.1,
-        0.1
+        0.1,
+        1
     ],
-    "period": 2,
+    "period": 1,
     "inc_param": 3,
     "var_param": 0,
-    "delta_inc": -0.001,
-    "inc_iter": 1,
+    "delta_inc": 0.01,
+    "inc_iter": 10,
     "max_iter": 100,
     "numerical_diff": false,
-    "dif_strip": 1e-04,
+    "dif_strip": 1e-08,
     "eps": 1e-08,
     "explode": 1000
 }

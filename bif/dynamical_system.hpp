@@ -22,18 +22,15 @@ public:
   double dif_strip;
   double eps;
   double explode;
-  bool fix_mode;
+  unsigned int mode;
 
   std::string out_path;
   std::string json_out_path;
 
   Eigen::VectorXd x0;
-  Eigen::VectorXd params;
   Eigen::VectorXd p;
 
   Eigen::VectorXcd eigvals;
-  Eigen::dcomplex mu;
-  double theta;
 
   Eigen::VectorXd f;
   Eigen::MatrixXd dfdx;
@@ -56,17 +53,21 @@ public:
   std::vector<Eigen::MatrixXd> dTldxdx;
   Eigen::MatrixXd dTldxdlambda;
 
-  Eigen::MatrixXcd chara_poly;
+  Eigen::MatrixXd chara_poly;
 
   void function([[maybe_unused]] int k, Eigen::VectorXd &x);
 
   void store_states(const Eigen::VectorXd &v);
   void store_states_numeric(const Eigen::VectorXd &v);
-  Eigen::VectorXd newton_F();
-  Eigen::MatrixXd newton_J();
+  Eigen::VectorXd newton_F_G();
+  Eigen::MatrixXd newton_J_G();
+  Eigen::VectorXd newton_F_PD();
+  Eigen::MatrixXd newton_J_PD();
+  Eigen::VectorXd newton_F_NS();
+  Eigen::MatrixXd newton_J_NS();
   void store_states_fix(const Eigen::VectorXd &v);
-  Eigen::VectorXd newton_fix_F();
-  Eigen::MatrixXd newton_fix_J();
+  Eigen::VectorXd newton_F_fix();
+  Eigen::MatrixXd newton_J_fix();
   std::tuple<Eigen::VectorXd, Eigen::MatrixXd>
   newton_FJ(const Eigen::VectorXd &v);
 };

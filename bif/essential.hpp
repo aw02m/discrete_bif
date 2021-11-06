@@ -59,14 +59,14 @@ Eigen::MatrixXd bialt_prod_square(const Eigen::MatrixXd &A, int bialt_dim) {
   return ret;
 }
 
-Eigen::dcomplex det_derivative(const Eigen::MatrixXcd &A,
-                               const Eigen::MatrixXcd &dA, unsigned int dim) {
-  Eigen::MatrixXcd temp(dim, dim);
-  Eigen::dcomplex ret(0, 0);
+double det_derivative(const Eigen::MatrixXd &A, const Eigen::MatrixXd &dA,
+                      int dim) {
+  Eigen::MatrixXd temp(dim, dim);
+  double ret = 0;
 
   for (int i = 0; i < dim; i++) {
     temp = A;
-    temp.col(i) = dA.col(i).cast<Eigen::dcomplex>();
+    temp.col(i) = dA.col(i);
     ret += temp.determinant();
   }
 

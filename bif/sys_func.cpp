@@ -154,6 +154,5 @@ void dynamical_system::function([[maybe_unused]] int k, Eigen::VectorXd &x) {
           dfdxdlambda * state_dphidx.col(i) + dfdx * state_dphidxdlambda.col(i);
       counter += xdim;
     }
-    debug(3);
   }
 }

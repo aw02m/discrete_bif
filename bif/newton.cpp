@@ -6,7 +6,7 @@
 
 void newton(dynamical_system &ds) {
   unsigned int target_dim;
-  if (!ds.fix_mode) {
+  if (ds.mode != 0) {
     target_dim = ds.xdim + 1;
   } else {
     target_dim = ds.xdim;
@@ -21,9 +21,8 @@ void newton(dynamical_system &ds) {
   bool exit_flag = false;
 
   vp(Eigen::seqN(0, ds.xdim)) = ds.x0;
-  if (!ds.fix_mode) {
+  if (ds.mode != 0) {
     vp(ds.xdim) = ds.p(ds.var_param);
-    // vp(ds.xdim + 1) = ds.theta;
   }
 
   Eigen::IOFormat Out(Eigen::FullPrecision, 0, " ", "\n", " ", " ");
@@ -38,13 +37,14 @@ void newton(dynamical_system &ds) {
     }
     auto start = std::chrono::system_clock::now();
     for (int i = 0; i < ds.max_iter; i++) {
-      debug(0);
       auto FJ = ds.newton_FJ(vp);
       F = std::get<0>(FJ);
       J = std::get<1>(FJ);
       vn = Eigen::ColPivHouseholderQR<Eigen::MatrixXd>(J).solve(-F) + vp;
+      // debug(F);
+      // exit_flag = true;
 
-      norm = (vn - vp).norm();
+      norm = F.norm();
       if (norm < ds.eps) {
         auto end = std::chrono::system_clock::now();
         auto dur = end - start;
@@ -59,7 +59,6 @@ void newton(dynamical_system &ds) {
         std::cout << "x0     : "
                   << vn(Eigen::seqN(0, ds.xdim)).transpose().format(Comma)
                   << std::endl;
-        std::cout << "theta  : " << ds.theta << std::endl;
         std::cout << std::setprecision(4);
         std::cout << "(Re(μ), Im(μ)), abs(μ), arg(μ) :" << std::endl;
         for (int k = 0; k < ds.xdim; k++) {
@@ -90,6 +89,5 @@ void newton(dynamical_system &ds) {
   // set last state
   ds.x0 = vn(Eigen::seqN(0, ds.xdim));
   ds.p(ds.var_param) = vn(ds.xdim);
-  ds.theta = vn(ds.xdim + 1);
   f.close();
 }
