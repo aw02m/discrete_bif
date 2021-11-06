@@ -21,18 +21,17 @@ void dynamical_system::function([[maybe_unused]] int k, Eigen::VectorXd &x) {
   d = p(3);
   m = p(4);
 
-  /* P(y) version */
+  /* P(x) version */
   f(0) = d * x(1);
-  f(1) = a * std::pow(x(1), m) * (x(1) * x(1) - b * b) + c * x(0);
+  f(1) = a * std::pow(x(0), m) * (x(0) * x(0) - b * b) + c * x(0);
 
   dfdx(0, 1) = d;
-  dfdx(1, 0) = c;
-  dfdx(1, 1) = a * m * std::pow(x(1), m - 1) * (x(1) * x(1) - b * b) +
-               a * std::pow(x(1), m) * 2 * x(1);
+  dfdx(1, 0) = a * m * std::pow(x(0), m - 1) * (x(0) * x(0) - b * b) +
+               a * std::pow(x(0), m) * 2 * x(0) + c;
 
   switch (var_param) {
   case 0:
-    dfdlambda(1) = std::pow(x(1), m) * (x(1) * x(1) - b * b);
+    dfdlambda(1) = std::pow(x(0), m) * (x(0) * x(0) - b * b);
     break;
   case 3:
     dfdlambda(0) = x(1);
@@ -41,20 +40,56 @@ void dynamical_system::function([[maybe_unused]] int k, Eigen::VectorXd &x) {
 
   // numerical_diff does not require 2nd derivatives.
   if (!numerical_diff) {
-    dfdxdx[1](1, 1) =
-        a * m * (m - 1) * std::pow(x(1), m - 2) * (x(1) * x(1) - b * b) +
-        2 * a * m * std::pow(x(1), m) + 2 * a * (m + 1) * std::pow(x(1), m);
+    dfdxdx[0](1, 0) =
+        a * m * (m - 1) * std::pow(x(0), m - 2) * (x(0) * x(0) - b * b) +
+        a * m * std::pow(x(0), m - 1) * 2 * x(0) +
+        a * m * std::pow(x(0), m - 1) * 2 * x(0) + a * std::pow(x(0), m) * 2;
 
     switch (var_param) {
     case 0:
-      dfdxdlambda(1, 1) = m * std::pow(x(1), m - 1) * (x(1) * x(1) - b * b) +
-                          2 * std::pow(x(1), m + 1);
+      dfdxdlambda(1, 0) = m * std::pow(x(0), m - 1) * (x(0) * x(0) - b * b) +
+                          2 * std::pow(x(0), m + 1);
       break;
     case 3:
       dfdxdlambda(0, 1) = 1;
       break;
     }
   }
+
+  /* P(y) version */
+  // f(0) = d * x(1);
+  // f(1) = a * std::pow(x(1), m) * (x(1) * x(1) - b * b) + c * x(0);
+
+  // dfdx(0, 1) = d;
+  // dfdx(1, 0) = c;
+  // dfdx(1, 1) = a * m * std::pow(x(1), m - 1) * (x(1) * x(1) - b * b) +
+  //              a * std::pow(x(1), m) * 2 * x(1);
+
+  // switch (var_param) {
+  // case 0:
+  //   dfdlambda(1) = std::pow(x(1), m) * (x(1) * x(1) - b * b);
+  //   break;
+  // case 3:
+  //   dfdlambda(0) = x(1);
+  //   break;
+  // }
+
+  // // numerical_diff does not require 2nd derivatives.
+  // if (!numerical_diff) {
+  //   dfdxdx[1](1, 1) =
+  //       a * m * (m - 1) * std::pow(x(1), m - 2) * (x(1) * x(1) - b * b) +
+  //       2 * a * m * std::pow(x(1), m) + 2 * a * (m + 1) * std::pow(x(1), m);
+
+  //   switch (var_param) {
+  //   case 0:
+  //     dfdxdlambda(1, 1) = m * std::pow(x(1), m - 1) * (x(1) * x(1) - b * b) +
+  //                         2 * std::pow(x(1), m + 1);
+  //     break;
+  //   case 3:
+  //     dfdxdlambda(0, 1) = 1;
+  //     break;
+  //   }
+  // }
 
   /******************************************************/
   /*     DO NOT EDIT BELOW (variational equations)      */
@@ -74,7 +109,7 @@ void dynamical_system::function([[maybe_unused]] int k, Eigen::VectorXd &x) {
   state_dphidlambda = x(Eigen::seqN(counter, size_dphidlambda));
   counter += size_dphidlambda;
 
-// numerical_diff does not require states of 2nd derivatives.
+  // numerical_diff does not require states of 2nd derivatives.
   if (!numerical_diff) {
     Eigen::MatrixXd temp;
     for (int i = 0; i < xdim; i++) {
@@ -119,5 +154,6 @@ void dynamical_system::function([[maybe_unused]] int k, Eigen::VectorXd &x) {
           dfdxdlambda * state_dphidx.col(i) + dfdx * state_dphidxdlambda.col(i);
       counter += xdim;
     }
+    debug(3);
   }
 }

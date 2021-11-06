@@ -9,6 +9,7 @@ public:
   dynamical_system(nlohmann::json json);
 
   unsigned int xdim;
+  unsigned int bialt_dim;
   unsigned int period;
 
   // Newton param
@@ -58,8 +59,6 @@ public:
   Eigen::MatrixXcd chara_poly;
 
   void function([[maybe_unused]] int k, Eigen::VectorXd &x);
-  Eigen::dcomplex det_derivative(const Eigen::MatrixXcd &A,
-                                 const Eigen::MatrixXcd &dA);
 
   void store_states(const Eigen::VectorXd &v);
   void store_states_numeric(const Eigen::VectorXd &v);
