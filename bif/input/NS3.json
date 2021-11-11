@@ -1,7 +1,7 @@
 {
     "out_path": "../output/out",
     "json_out_path": "out.json",
-    "mode": 1,
+    "mode": 3,
     "xrange": [
         -3.0,
         3
@@ -33,10 +33,10 @@
     "inc_param": 3,
     "var_param": 0,
     "delta_inc": 0.01,
-    "inc_iter": 10,
-    "max_iter": 100,
+    "inc_iter": 100,
+    "max_iter": 16,
     "numerical_diff": false,
-    "dif_strip": 1e-08,
+    "dif_strip": 1e-04,
     "eps": 1e-08,
     "explode": 1000
 }

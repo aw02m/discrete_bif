@@ -26,9 +26,9 @@ void newton(dynamical_system &ds) {
   }
 
   Eigen::IOFormat Out(Eigen::FullPrecision, 0, " ", "\n", " ", " ");
-  std::ofstream f;
-  f.open(ds.out_path, std::ios::out);
-  f << std::fixed;
+  std::ofstream fp;
+  fp.open(ds.out_path, std::ios::out);
+  fp << std::fixed;
 
   for (int p = 0; p < ds.inc_iter; p++) {
     if (exit_flag) {
@@ -41,8 +41,6 @@ void newton(dynamical_system &ds) {
       F = std::get<0>(FJ);
       J = std::get<1>(FJ);
       vn = Eigen::ColPivHouseholderQR<Eigen::MatrixXd>(J).solve(-F) + vp;
-      // debug(F);
-      // exit_flag = true;
 
       norm = F.norm();
       if (norm < ds.eps) {
@@ -68,7 +66,7 @@ void newton(dynamical_system &ds) {
         }
         std::cout << "**************************************************"
                   << std::endl;
-        f << ds.p.transpose().format(Out) << std::endl;
+        fp << ds.p.transpose().format(Out) << std::endl;
         vp = vn;
         break;
       } else if (norm >= ds.explode) {
@@ -88,6 +86,7 @@ void newton(dynamical_system &ds) {
 
   // set last state
   ds.x0 = vn(Eigen::seqN(0, ds.xdim));
-  ds.p(ds.var_param) = vn(ds.xdim);
-  f.close();
+  if (ds.mode != 0)
+    ds.p(ds.var_param) = vn(ds.xdim);
+  fp.close();
 }

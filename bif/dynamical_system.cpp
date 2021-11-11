@@ -263,12 +263,13 @@ Eigen::MatrixXd dynamical_system::newton_J_NS() {
   Eigen::MatrixXd J(xdim + 1, xdim + 1);
   Eigen::MatrixXd dchidx(1, xdim);
   double dchidlambda;
+  Eigen::MatrixXd temp(bialt_dim, bialt_dim);
   for (int i = 0; i < xdim; i++) {
-    dchidx(0, i) = det_derivative(
-        chara_poly, 2 * bialt_prod_square(dTldx, bialt_dim), bialt_dim);
+    temp = bialt_prod_square_derivative(dTldx, dTldxdx[i], bialt_dim);
+    dchidx(0, i) = det_derivative(chara_poly, temp, bialt_dim);
   }
-  dchidlambda = det_derivative(
-      chara_poly, 2 * bialt_prod_square(dTldx, bialt_dim), bialt_dim);
+  temp = bialt_prod_square_derivative(dTldx, dTldxdlambda, bialt_dim);
+  dchidlambda = det_derivative(chara_poly, temp, bialt_dim);
 
   J(Eigen::seqN(0, xdim), Eigen::seqN(0, xdim)) =
       dTldx - Eigen::MatrixXd::Identity(xdim, xdim);
@@ -292,35 +293,28 @@ void dynamical_system::store_states_fix(const Eigen::VectorXd &v) {
     function(i, state);
     xk[i + 1] = state(Eigen::seqN(0, xdim));
   }
-
   Eigen::MatrixXd dphidx_buf;
   dphidx_buf = state(Eigen::seqN(xdim, size_dphidx));
   dphidx_buf.resize(xdim, xdim);
+
   dphidx = dphidx_buf;
 
   dTldx = dphidx;
+
+  eigvals = Eigen::EigenSolver<Eigen::MatrixXd>(dTldx).eigenvalues();
 }
 
-Eigen::VectorXd dynamical_system::newton_F_fix() {
-  Eigen::VectorXd F(xdim);
-  Eigen::MatrixXd I = Eigen::MatrixXd::Identity(xdim, xdim);
-
-  F(Eigen::seqN(0, xdim)) = xk[period] - xk[0];
-
-  return F;
-}
+Eigen::VectorXd dynamical_system::newton_F_fix() { return xk[period] - xk[0]; }
 
 Eigen::MatrixXd dynamical_system::newton_J_fix() {
-  Eigen::MatrixXd J(xdim, xdim);
-  Eigen::MatrixXd I = Eigen::MatrixXd::Identity(xdim, xdim);
-
-  J(Eigen::seqN(0, xdim), Eigen::seqN(0, xdim)) = dTldx - I;
-
-  return J;
+  return dTldx - Eigen::MatrixXd::Identity(xdim, xdim);
 }
 
 std::tuple<Eigen::VectorXd, Eigen::MatrixXd>
 dynamical_system::newton_FJ(const Eigen::VectorXd &v) {
+  Eigen::VectorXd F;
+  Eigen::MatrixXd J;
+
   if (mode != 0) {
     if (!numerical_diff) {
       store_states(v);
@@ -329,19 +323,23 @@ dynamical_system::newton_FJ(const Eigen::VectorXd &v) {
     }
     switch (mode) {
     case 1:
-      return std::make_tuple(newton_F_G(), newton_J_G());
+      F = newton_F_G();
+      J = newton_J_G();
+      break;
     case 2:
-      return std::make_tuple(newton_F_PD(), newton_J_PD());
+      F = newton_F_PD();
+      J = newton_J_PD();
+      break;
     case 3:
-      return std::make_tuple(newton_F_NS(), newton_J_NS());
+      F = newton_F_NS();
+      J = newton_J_NS();
+      break;
     }
   } else {
-    debug(2);
     store_states_fix(v);
-    debug(4);
-    return std::make_tuple(newton_F_fix(), newton_J_fix());
+    F = newton_F_fix();
+    J = newton_J_fix();
   }
-  // dummy
-  return std::make_tuple(Eigen::VectorXd::Zero(xdim),
-                         Eigen::MatrixXd::Zero(xdim, xdim));
+
+  return std::make_tuple(F, J);
 }

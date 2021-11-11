@@ -38,22 +38,19 @@ void dynamical_system::function([[maybe_unused]] int k, Eigen::VectorXd &x) {
     break;
   }
 
-  // numerical_diff does not require 2nd derivatives.
-  if (!numerical_diff) {
-    dfdxdx[0](1, 0) =
-        a * m * (m - 1) * std::pow(x(0), m - 2) * (x(0) * x(0) - b * b) +
-        a * m * std::pow(x(0), m - 1) * 2 * x(0) +
-        a * m * std::pow(x(0), m - 1) * 2 * x(0) + a * std::pow(x(0), m) * 2;
+  dfdxdx[0](1, 0) =
+      a * m * (m - 1) * std::pow(x(0), m - 2) * (x(0) * x(0) - b * b) +
+      a * m * std::pow(x(0), m - 1) * 2 * x(0) +
+      a * m * std::pow(x(0), m - 1) * 2 * x(0) + a * std::pow(x(0), m) * 2;
 
-    switch (var_param) {
-    case 0:
-      dfdxdlambda(1, 0) = m * std::pow(x(0), m - 1) * (x(0) * x(0) - b * b) +
-                          2 * std::pow(x(0), m + 1);
-      break;
-    case 3:
-      dfdxdlambda(0, 1) = 1;
-      break;
-    }
+  switch (var_param) {
+  case 0:
+    dfdxdlambda(1, 0) = m * std::pow(x(0), m - 1) * (x(0) * x(0) - b * b) +
+                        2 * std::pow(x(0), m + 1);
+    break;
+  case 3:
+    dfdxdlambda(0, 1) = 1;
+    break;
   }
 
   /* P(y) version */
@@ -74,21 +71,18 @@ void dynamical_system::function([[maybe_unused]] int k, Eigen::VectorXd &x) {
   //   break;
   // }
 
-  // // numerical_diff does not require 2nd derivatives.
-  // if (!numerical_diff) {
-  //   dfdxdx[1](1, 1) =
-  //       a * m * (m - 1) * std::pow(x(1), m - 2) * (x(1) * x(1) - b * b) +
-  //       2 * a * m * std::pow(x(1), m) + 2 * a * (m + 1) * std::pow(x(1), m);
+  // dfdxdx[1](1, 1) =
+  //     a * m * (m - 1) * std::pow(x(1), m - 2) * (x(1) * x(1) - b * b) +
+  //     2 * a * m * std::pow(x(1), m) + 2 * a * (m + 1) * std::pow(x(1), m);
 
-  //   switch (var_param) {
-  //   case 0:
-  //     dfdxdlambda(1, 1) = m * std::pow(x(1), m - 1) * (x(1) * x(1) - b * b) +
-  //                         2 * std::pow(x(1), m + 1);
-  //     break;
-  //   case 3:
-  //     dfdxdlambda(0, 1) = 1;
-  //     break;
-  //   }
+  // switch (var_param) {
+  // case 0:
+  //   dfdxdlambda(1, 1) = m * std::pow(x(1), m - 1) * (x(1) * x(1) - b * b) +
+  //                       2 * std::pow(x(1), m + 1);
+  //   break;
+  // case 3:
+  //   dfdxdlambda(0, 1) = 1;
+  //   break;
   // }
 
   /******************************************************/
@@ -96,11 +90,11 @@ void dynamical_system::function([[maybe_unused]] int k, Eigen::VectorXd &x) {
   /******************************************************/
   unsigned int counter = xdim;
   // variational state (transform to matrix shape for easy producting)
-  Eigen::MatrixXd state_dphidx(xdim, xdim);
-  Eigen::VectorXd state_dphidlambda(xdim);
+  Eigen::MatrixXd state_dphidx;
+  Eigen::VectorXd state_dphidlambda;
   std::vector<Eigen::MatrixXd> state_dphidxdx(
       xdim, Eigen::MatrixXd::Zero(xdim, xdim));
-  Eigen::MatrixXd state_dphidxdlambda(xdim, xdim);
+  Eigen::MatrixXd state_dphidxdlambda;
 
   state_dphidx = x(Eigen::seqN(counter, size_dphidx));
   state_dphidx.resize(xdim, xdim);
@@ -109,20 +103,16 @@ void dynamical_system::function([[maybe_unused]] int k, Eigen::VectorXd &x) {
   state_dphidlambda = x(Eigen::seqN(counter, size_dphidlambda));
   counter += size_dphidlambda;
 
-  // numerical_diff does not require states of 2nd derivatives.
-  if (!numerical_diff) {
-    Eigen::MatrixXd temp;
-    for (int i = 0; i < xdim; i++) {
-      temp = x(Eigen::seqN(counter + size_dphidx * i, size_dphidx));
-      temp.resize(xdim, xdim);
-      state_dphidxdx[i] = temp;
-      temp.resize(size_dphidx, 1);
-    }
-    counter += size_dphidxdx;
-
-    Eigen::MatrixXd state_dphidxdlambda =
-        x(Eigen::seqN(counter, size_dphidxdlambda));
+  Eigen::MatrixXd temp;
+  for (int i = 0; i < xdim; i++) {
+    temp = x(Eigen::seqN(counter + size_dphidx * i, size_dphidx));
+    temp.resize(xdim, xdim);
+    state_dphidxdx[i] = temp;
+    temp.resize(size_dphidx, 1);
   }
+  counter += size_dphidxdx;
+
+  state_dphidxdlambda = x(Eigen::seqN(counter, size_dphidxdlambda));
 
   counter = 0;
 
@@ -134,25 +124,28 @@ void dynamical_system::function([[maybe_unused]] int k, Eigen::VectorXd &x) {
   x(Eigen::seqN(counter, size_dphidx)) = dfdx * state_dphidx;
   counter += size_dphidx;
 
-  // dphidlambda
-  x(Eigen::seqN(counter, xdim)) = dfdx * state_dphidlambda + dfdlambda;
-  counter += size_dphidlambda;
+  if (mode != 0) {
+    // dphidlambda  
+    x(Eigen::seqN(counter, xdim)) = dfdx * state_dphidlambda + dfdlambda;
+    counter += size_dphidlambda;
 
-  // numerical_diff does not require 2nd derivatives.
-  if (!numerical_diff) {
-    // dphidxdx
-    for (int i = 0; i < xdim; i++) {
-      x(Eigen::seqN(counter, size_dphidx)) =
-          dfdxdx[i] * state_dphidx * state_dphidx + dfdx * state_dphidxdx[i];
-      counter += size_dphidx;
-    }
+    // numerical_diff and fix_mode do not require 2nd derivatives.
+    if (!numerical_diff) {
+      // dphidxdx
+      for (int i = 0; i < xdim; i++) {
+        x(Eigen::seqN(counter, size_dphidx)) =
+            dfdxdx[i] * state_dphidx * state_dphidx + dfdx * state_dphidxdx[i];
+        counter += size_dphidx;
+      }
 
-    // dphidxdlambda
-    for (int i = 0; i < xdim; i++) {
-      x(Eigen::seqN(counter, xdim)) =
-          dfdxdx[i] * state_dphidlambda * state_dphidx +
-          dfdxdlambda * state_dphidx.col(i) + dfdx * state_dphidxdlambda.col(i);
-      counter += xdim;
+      // dphidxdlambda
+      for (int i = 0; i < xdim; i++) {
+        x(Eigen::seqN(counter, xdim)) =
+            dfdxdx[i] * state_dphidlambda * state_dphidx +
+            dfdxdlambda * state_dphidx.col(i) +
+            dfdx * state_dphidxdlambda.col(i);
+        counter += xdim;
+      }
     }
   }
 }
