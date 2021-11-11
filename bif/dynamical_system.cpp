@@ -1,7 +1,11 @@
 #include "dynamical_system.hpp"
+#include "essential.hpp"
 
 dynamical_system::dynamical_system(nlohmann::json json) {
   xdim = json["x0"].size();
+  bialt_dim = 0;
+  for (int i = 0; i < xdim; i++)
+    bialt_dim += i;
   size_dphidx = xdim * xdim;
   size_dphidlambda = xdim;
   size_dphidxdx = xdim * xdim * xdim;
@@ -17,7 +21,7 @@ dynamical_system::dynamical_system(nlohmann::json json) {
   dif_strip = json["dif_strip"];
   eps = json["eps"];
   explode = json["explode"];
-  fix_mode = json["fix_mode"];
+  mode = json["mode"];
 
   out_path = json["out_path"];
   json_out_path = json["json_out_path"];
@@ -30,10 +34,6 @@ dynamical_system::dynamical_system(nlohmann::json json) {
   std::vector<double> params_arr = json["params"];
   Eigen::Map<Eigen::VectorXd> params(params_arr.data(), params_arr.size());
   this->p = params;
-
-  theta = json["theta"];
-  mu = Eigen::dcomplex(std::cos(theta), std::sin(theta));
-  // mu = Eigen::dcomplex(json["sigma"], json["omega"]);
 
   f = Eigen::VectorXd::Zero(xdim);
   dfdx = Eigen::MatrixXd::Zero(xdim, xdim);
@@ -61,7 +61,6 @@ void dynamical_system::store_states(const Eigen::VectorXd &v) {
 
   xk[0] = v(Eigen::seqN(0, xdim));
   p(var_param) = v(xdim);
-  theta = v(xdim + 1);
 
   I.resize(I.cols() * I.rows(), 1);
   state << xk[0], I, O;
@@ -102,10 +101,19 @@ void dynamical_system::store_states(const Eigen::VectorXd &v) {
   dTldxdlambda = dphidxdlambda;
 
   eigvals = Eigen::EigenSolver<Eigen::MatrixXd>(dTldx).eigenvalues();
-  mu = Eigen::dcomplex(std::cos(theta), std::sin(theta));
 
-  I = Eigen::MatrixXd::Identity(xdim, xdim);
-  chara_poly = dTldx - mu * I;
+  switch (mode) {
+  case 1:
+    chara_poly = dTldx - Eigen::MatrixXd::Identity(xdim, xdim);
+    break;
+  case 2:
+    chara_poly = dTldx + Eigen::MatrixXd::Identity(xdim, xdim);
+    break;
+  case 3:
+    chara_poly = bialt_prod_square(dTldx, bialt_dim) -
+                 Eigen::MatrixXd::Identity(bialt_dim, bialt_dim);
+    break;
+  }
 }
 
 void dynamical_system::store_states_numeric(const Eigen::VectorXd &v) {
@@ -119,7 +127,6 @@ void dynamical_system::store_states_numeric(const Eigen::VectorXd &v) {
 
   xk[0] = v(Eigen::seqN(0, xdim));
   p(var_param) = v(xdim);
-  theta = v(xdim + 1);
 
   I.resize(I.cols() * I.rows(), 1);
   state << xk[0], I, O;
@@ -174,47 +181,101 @@ void dynamical_system::store_states_numeric(const Eigen::VectorXd &v) {
   dTldxdlambda = dphidxdlambda;
 
   eigvals = Eigen::EigenSolver<Eigen::MatrixXd>(dTldx).eigenvalues();
-  mu = Eigen::dcomplex(std::cos(theta), std::sin(theta));
 
-  I = Eigen::MatrixXd::Identity(xdim, xdim);
-  chara_poly = dTldx - mu * I;
+  switch (mode) {
+  case 1:
+    chara_poly = dTldx - Eigen::MatrixXd::Identity(xdim, xdim);
+    break;
+  case 2:
+    chara_poly = dTldx + Eigen::MatrixXd::Identity(xdim, xdim);
+    break;
+  case 3:
+    chara_poly = bialt_prod_square(dTldx, bialt_dim) -
+                 Eigen::MatrixXd::Identity(bialt_dim, bialt_dim);
+    break;
+  }
 }
 
-Eigen::VectorXd dynamical_system::newton_F() {
-  Eigen::VectorXd F(xdim + 2);
-  Eigen::MatrixXd I = Eigen::MatrixXd::Identity(xdim, xdim);
-  Eigen::dcomplex chi = chara_poly.determinant();
+Eigen::VectorXd dynamical_system::newton_F_G() {
+  Eigen::VectorXd F(xdim + 1);
 
   F(Eigen::seqN(0, xdim)) = xk[period] - xk[0];
-  F(xdim) = chi.real();
-  F(xdim + 1) = chi.imag();
+  F(xdim) = chara_poly.determinant();
 
   return F;
 }
 
-Eigen::MatrixXd dynamical_system::newton_J() {
-  Eigen::MatrixXd J(xdim + 2, xdim + 2);
-  Eigen::MatrixXd I = Eigen::MatrixXd::Identity(xdim, xdim);
-  Eigen::MatrixXcd dchidx(1, xdim);
-  Eigen::dcomplex dchidlambda(0, 0);
-  Eigen::dcomplex dchidtheta(0, 0);
+Eigen::MatrixXd dynamical_system::newton_J_G() {
+  Eigen::MatrixXd J(xdim + 1, xdim + 1);
+  Eigen::MatrixXd dchidx(1, xdim);
+  double dchidlambda;
   for (int i = 0; i < xdim; i++) {
-    dchidx(0, i) = det_derivative(chara_poly, dTldxdx[i]);
+    dchidx(0, i) = det_derivative(chara_poly, dTldxdx[i], xdim);
   }
-  dchidlambda = det_derivative(chara_poly, dTldxdlambda);
-  Eigen::MatrixXcd dpolydtheta =
-      Eigen::dcomplex(std::sin(theta), -std::cos(theta)) * I;
-  dchidtheta = det_derivative(chara_poly, dpolydtheta);
+  dchidlambda = det_derivative(chara_poly, dTldxdlambda, xdim);
 
-  J(Eigen::seqN(0, xdim), Eigen::seqN(0, xdim)) = dTldx - I;
+  J(Eigen::seqN(0, xdim), Eigen::seqN(0, xdim)) =
+      dTldx - Eigen::MatrixXd::Identity(xdim, xdim);
   J(Eigen::seqN(0, xdim), xdim) = dTldlambda;
-  J(Eigen::seqN(0, xdim), xdim + 1) = Eigen::VectorXd::Zero(xdim);
-  J(xdim, Eigen::seqN(0, xdim)) = dchidx.real();
-  J(xdim, xdim) = dchidlambda.real();
-  J(xdim, xdim + 1) = dchidtheta.real();
-  J(xdim + 1, Eigen::seqN(0, xdim)) = dchidx.imag();
-  J(xdim + 1, xdim) = dchidlambda.imag();
-  J(xdim + 1, xdim + 1) = dchidtheta.imag();
+  J(xdim, Eigen::seqN(0, xdim)) = dchidx;
+  J(xdim, xdim) = dchidlambda;
+
+  return J;
+}
+
+Eigen::VectorXd dynamical_system::newton_F_PD() {
+  Eigen::VectorXd F(xdim + 1);
+
+  F(Eigen::seqN(0, xdim)) = xk[period] - xk[0];
+  F(xdim) = chara_poly.determinant();
+
+  return F;
+}
+
+Eigen::MatrixXd dynamical_system::newton_J_PD() {
+  Eigen::MatrixXd J(xdim + 1, xdim + 1);
+  Eigen::MatrixXd dchidx(1, xdim);
+  double dchidlambda;
+  for (int i = 0; i < xdim; i++) {
+    dchidx(0, i) = det_derivative(chara_poly, dTldxdx[i], xdim);
+  }
+  dchidlambda = det_derivative(chara_poly, dTldxdlambda, xdim);
+
+  J(Eigen::seqN(0, xdim), Eigen::seqN(0, xdim)) =
+      dTldx - Eigen::MatrixXd::Identity(xdim, xdim);
+  J(Eigen::seqN(0, xdim), xdim) = dTldlambda;
+  J(xdim, Eigen::seqN(0, xdim)) = dchidx;
+  J(xdim, xdim) = dchidlambda;
+
+  return J;
+}
+
+Eigen::VectorXd dynamical_system::newton_F_NS() {
+  Eigen::VectorXd F(xdim + 1);
+
+  F(Eigen::seqN(0, xdim)) = xk[period] - xk[0];
+  F(xdim) = chara_poly.determinant();
+
+  return F;
+}
+
+Eigen::MatrixXd dynamical_system::newton_J_NS() {
+  Eigen::MatrixXd J(xdim + 1, xdim + 1);
+  Eigen::MatrixXd dchidx(1, xdim);
+  double dchidlambda;
+  Eigen::MatrixXd temp(bialt_dim, bialt_dim);
+  for (int i = 0; i < xdim; i++) {
+    temp = bialt_prod_square_derivative(dTldx, dTldxdx[i], bialt_dim);
+    dchidx(0, i) = det_derivative(chara_poly, temp, bialt_dim);
+  }
+  temp = bialt_prod_square_derivative(dTldx, dTldxdlambda, bialt_dim);
+  dchidlambda = det_derivative(chara_poly, temp, bialt_dim);
+
+  J(Eigen::seqN(0, xdim), Eigen::seqN(0, xdim)) =
+      dTldx - Eigen::MatrixXd::Identity(xdim, xdim);
+  J(Eigen::seqN(0, xdim), xdim) = dTldlambda;
+  J(xdim, Eigen::seqN(0, xdim)) = dchidx;
+  J(xdim, xdim) = dchidlambda;
 
   return J;
 }
@@ -223,7 +284,7 @@ void dynamical_system::store_states_fix(const Eigen::VectorXd &v) {
   Eigen::MatrixXd I = Eigen::MatrixXd::Identity(xdim, xdim);
   Eigen::VectorXd state(xdim + size_dphidx);
 
-  xk[0] = v(Eigen::seqN(0, xdim));
+  xk[0] = v;
 
   I.resize(I.cols() * I.rows(), 1);
   state << xk[0], I;
@@ -232,73 +293,53 @@ void dynamical_system::store_states_fix(const Eigen::VectorXd &v) {
     function(i, state);
     xk[i + 1] = state(Eigen::seqN(0, xdim));
   }
-
-  unsigned int counter = xdim;
   Eigen::MatrixXd dphidx_buf;
-  dphidx_buf = state(Eigen::seqN(counter, size_dphidx));
+  dphidx_buf = state(Eigen::seqN(xdim, size_dphidx));
   dphidx_buf.resize(xdim, xdim);
+
   dphidx = dphidx_buf;
 
   dTldx = dphidx;
 
-  // Find the argument <theta> of the characteristic constant
-  // whose absolute value is closest to 1.
   eigvals = Eigen::EigenSolver<Eigen::MatrixXd>(dTldx).eigenvalues();
-  unsigned int target_index = 0;
-  double delta = std::abs(eigvals(0)) - 1.0;
-  double delta_buf = 0;
-  for (int i = 1; i < xdim; i++) {
-    delta_buf = std::abs(eigvals(i)) - 1.0;
-    if (delta_buf < delta) {
-      target_index = i;
-    }
-  }
-  theta = std::arg(eigvals(target_index));
 }
 
-Eigen::VectorXd dynamical_system::newton_fix_F() {
-  Eigen::VectorXd F(xdim);
-  Eigen::MatrixXd I = Eigen::MatrixXd::Identity(xdim, xdim);
+Eigen::VectorXd dynamical_system::newton_F_fix() { return xk[period] - xk[0]; }
 
-  F(Eigen::seqN(0, xdim)) = xk[period] - xk[0];
-
-  return F;
-}
-
-Eigen::MatrixXd dynamical_system::newton_fix_J() {
-  Eigen::MatrixXd J(xdim, xdim);
-  Eigen::MatrixXd I = Eigen::MatrixXd::Identity(xdim, xdim);
-
-  J(Eigen::seqN(0, xdim), Eigen::seqN(0, xdim)) = dTldx - I;
-
-  return J;
+Eigen::MatrixXd dynamical_system::newton_J_fix() {
+  return dTldx - Eigen::MatrixXd::Identity(xdim, xdim);
 }
 
 std::tuple<Eigen::VectorXd, Eigen::MatrixXd>
 dynamical_system::newton_FJ(const Eigen::VectorXd &v) {
-  if (!fix_mode) {
+  Eigen::VectorXd F;
+  Eigen::MatrixXd J;
+
+  if (mode != 0) {
     if (!numerical_diff) {
       store_states(v);
     } else {
       store_states_numeric(v);
     }
-    return std::make_tuple(newton_F(), newton_J());
+    switch (mode) {
+    case 1:
+      F = newton_F_G();
+      J = newton_J_G();
+      break;
+    case 2:
+      F = newton_F_PD();
+      J = newton_J_PD();
+      break;
+    case 3:
+      F = newton_F_NS();
+      J = newton_J_NS();
+      break;
+    }
   } else {
     store_states_fix(v);
-    return std::make_tuple(newton_fix_F(), newton_fix_J());
-  }
-}
-
-Eigen::dcomplex dynamical_system::det_derivative(const Eigen::MatrixXcd &A,
-                                                 const Eigen::MatrixXcd &dA) {
-  Eigen::MatrixXcd temp(xdim, xdim);
-  Eigen::dcomplex ret(0, 0);
-
-  for (int i = 0; i < xdim; i++) {
-    temp = A;
-    temp.col(i) = dA.col(i).cast<Eigen::dcomplex>();
-    ret += temp.determinant();
+    F = newton_F_fix();
+    J = newton_J_fix();
   }
 
-  return ret;
+  return std::make_tuple(F, J);
 }
