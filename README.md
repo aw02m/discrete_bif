@@ -8,7 +8,7 @@ Aug/27/2021 : NS追跡に対応，数値微分が選択可能
 Oct/21/2021 : fixとbifの統合，json出力の自動化，数値微分が一時的に使用不可  
 Oct/22/2021 : 二階変分の数値微分が復活，ppをC++(QT+QCustomPlot)に変更  
 Oct/25/2021 : 変分方程式の記述を"CによるカオスCG"形式に変更(構造が`aw02m/autonomous_bif`とほぼ同一化)  
-Nov/11/2021 : NS条件をBialternate Productを用いた形式に変更，虚数の取り扱いが不要のため高速化，なぜかわからんが収束速度が前の虚部分離アルゴリズムよりもかなり早い！G，PDはmodeで独立
+Nov/11/2021 : NS条件をBialternate Productを用いた形式に変更，虚数の取り扱いが不要のため高速化，なぜかわからんが収束速度が前の虚部分離アルゴリズムよりもかなり早い！G，PDは独立したモードで実装
 
 # descrete_bif
 離散力学系(差分方程式)の分岐解析ツールです．  
@@ -58,7 +58,7 @@ Newton法の目的関数はNeimark-Sacker分岐条件ですが，I,GはNS条件�
 * cmake : MakeFileの自動生成に使います．
 
 ### bif入力ファイル概要
-* "mode" : 0:Fixed, 1:Tangent, 2:Period-Doubling, 3:Neimark-Sacker  
+* "mode" : 0:Fixed, 1:Tangent, 2:Period-Doubling, 3:Neimark-Sacker．本バージョンのNS条件はGとPDの条件を含まないため，収束先の引き込みが発生しにくくなりました．
 * "x0" : ppにてjsonファイルを出力した際に更新されます．この値が固定点計算の初期値として使用されます．
 * "period" : 固定点の周期を指定します．ppにて周期を確認して正確な整数値を与えてください．
 * "inc_param" : 増加させるパラメタを指定します．"params"のインデックスで指定してください．
