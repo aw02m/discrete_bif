@@ -110,7 +110,7 @@ void dynamical_system::store_states(const Eigen::VectorXd &v) {
     chara_poly = dTldx + Eigen::MatrixXd::Identity(xdim, xdim);
     break;
   case 3:
-    chara_poly = bialt_prod_square(dTldx, bialt_dim) -
+    chara_poly = bialt_prod_square(dTldx, xdim, bialt_dim) -
                  Eigen::MatrixXd::Identity(bialt_dim, bialt_dim);
     break;
   }
@@ -190,7 +190,7 @@ void dynamical_system::store_states_numeric(const Eigen::VectorXd &v) {
     chara_poly = dTldx + Eigen::MatrixXd::Identity(xdim, xdim);
     break;
   case 3:
-    chara_poly = bialt_prod_square(dTldx, bialt_dim) -
+    chara_poly = bialt_prod_square(dTldx, xdim, bialt_dim) -
                  Eigen::MatrixXd::Identity(bialt_dim, bialt_dim);
     break;
   }
@@ -265,10 +265,10 @@ Eigen::MatrixXd dynamical_system::newton_J_NS() {
   double dchidlambda;
   Eigen::MatrixXd temp(bialt_dim, bialt_dim);
   for (int i = 0; i < xdim; i++) {
-    temp = bialt_prod_square_derivative(dTldx, dTldxdx[i], bialt_dim);
+    temp = bialt_prod_square_derivative(dTldx, dTldxdx[i], xdim, bialt_dim);
     dchidx(0, i) = det_derivative(chara_poly, temp, bialt_dim);
   }
-  temp = bialt_prod_square_derivative(dTldx, dTldxdlambda, bialt_dim);
+  temp = bialt_prod_square_derivative(dTldx, dTldxdlambda, xdim, bialt_dim);
   dchidlambda = det_derivative(chara_poly, temp, bialt_dim);
 
   J(Eigen::seqN(0, xdim), Eigen::seqN(0, xdim)) =
