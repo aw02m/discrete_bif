@@ -8,8 +8,9 @@ Aug/27/2021 : NS追跡に対応，数値微分が選択可能
 Oct/21/2021 : fixとbifの統合，json出力の自動化，数値微分が一時的に使用不可  
 Oct/22/2021 : 二階変分の数値微分が復活，ppをC++(QT+QCustomPlot)に変更  
 Oct/25/2021 : 変分方程式の記述を"CによるカオスCG"形式に変更(構造が`aw02m/autonomous_bif`とほぼ同一化)  
-Nov/11/2021 : NS条件をBialternate Productを用いた形式に変更，虚数の取り扱いが不要のため高速化，なぜかわからんが収束速度が前の虚部分離アルゴリズムよりもかなり早い！G，PDは独立したモードで実装
-Jun/10/2022 : MacOSでのCmakeに対応．brew install eigen と nlohmann-jsonで普通に動きます．qt5はマダ
+Nov/11/2021 : NS条件をBialternate Productを用いた形式に変更，虚数の取り扱いが不要のため高速化，なぜかわからんが収束速度が前の虚部分離アルゴリズムよりもかなり早い！G，PDは独立したモードで実装  
+Jun/10/2022 : `bif`のMacOSでのCmakeに対応．`brew`経由で`eigen`と`nlohmann-json`を導入すれば動きます．QtのCmake対応はマダ
+Jun/21/2022 : `bif`と`pp`の`CMakeFile.txt`とツリー構造を変更．Qmakeを廃止したためすべてのプロジェクトはCmakeでコンパイル可能です．
 
 # descrete_bif
 離散力学系(差分方程式)の分岐解析ツールです．  
@@ -18,14 +19,16 @@ Jun/10/2022 : MacOSでのCmakeに対応．brew install eigen と nlohmann-json�
 1. pp (Phase portrait; 相平面描画ツール)
 2. bif (Bifurcation; 分岐集合追跡 + 固定点追跡)
 
+CMakeをプロジェクトのビルドに用いるため，適宜インストールをしておいてください．
+
 ## pp概要
-ppは相平面をリアルタイムに描画します．
+`pp`は相平面をリアルタイムに描画します．
 固定点計算のための近似値取得に使用してください．  
 
 ### 動作環境
-* Eigen-3.4-rc1 : 線形代数ライブラリです．現在のstableに実装されていない関数を使用しているため，gitリポジトリの最新バージョンを利用してください．Arch Linuxなひとは`# pamac build eigen-git`でインストールされます．
+* Qt6 : クロスプラットフォーム描画ライブラリ．Qt5, Qt4は非対応です．
+* Eigen-3.4-rc1 : 線形代数ライブラリです．現在のstableに実装されていない関数を使用しているため，gitリポジトリの最新バージョンを利用してください．Arch Linuxなひとは`# pamac build eigen-git`で，MacOSなひとは`$brew install eigen`でインストールされます．
 * nlohmann-3.10.1 : jsonライブラリ．
-* Qt5 : クロスプラットフォーム描画ライブラリ．
 
 ### pp入力ファイル要素
 * "xrange", "yrange" : x,y描画区間．
@@ -38,7 +41,14 @@ ppは相平面をリアルタイムに描画します．
 * "json_out_path" : 出力されるjsonのパスを指定します．
 
 ### 使用法
-`mkdir build`で`cd build`の後`qmake ../`で`Makefile`を作成し，`make`します．`qmake`は`qt5`にバンドルされています．
+```
+cd pp
+mkdir build
+cd build
+cmake ../cmake-tree
+make
+./main ../input/<your_input_file>.json
+```
 * ←→ : 変更するパラメタを選択します．
 * ↑↓ : 選択したパラメタを変更します．
 * Space : Poincare断面上の固定点，パラメタ，周期τを出力します．
@@ -54,12 +64,11 @@ Newton法の目的関数はNeimark-Sacker分岐条件ですが，I,GはNS条件�
 後述の固定点計算モードを指定することで固定点の追跡も可能です．
 
 ### 動作環境
-* Eigen-3.4-rc1 : 線形代数ライブラリです．現在のstableに実装されていない関数を使用しているため，gitリポジトリの最新バージョンを利用してください．Arch Linuxなひとは`# pamac build eigen-git`でインストールされます．
-* nlohmann-3.10.1 : jsonライブラリ．
-* cmake : MakeFileの自動生成に使います．
+* Eigen-3.4-rc1
+* nlohmann-3.10.1
 
 ### bif入力ファイル概要
-* "mode" : 0:Fixed, 1:Tangent, 2:Period-Doubling, 3:Neimark-Sacker．本バージョンのNS条件はGとPDの条件を含まないため，収束先の引き込みが発生しにくくなりました．
+* "mode" : 0:Fixed, 1:Tangent, 2:Period-Doubling, 3:Neimark-Sacker．本バージョンのNS条件はGとPDの条件を含まないため，不正な収束が発生しにくくなりました．
 * "x0" : ppにてjsonファイルを出力した際に更新されます．この値が固定点計算の初期値として使用されます．
 * "period" : 固定点の周期を指定します．ppにて周期を確認して正確な整数値を与えてください．
 * "inc_param" : 増加させるパラメタを指定します．"params"のインデックスで指定してください．
@@ -72,7 +81,14 @@ Newton法の目的関数はNeimark-Sacker分岐条件ですが，I,GはNS条件�
 * "dif_strip" : 数値微分を用いる際の微小量を指定します．`numerical_diff`がfalseの場合は無視されます．
 
 ### 使用法
-`./main [input json file]`にて実行．コンパイルは`mkdir build`の後`bif/build`ディレクトリの中で`cmake ../`するとMakefileが自動で作成されますので，その後`make`で実行ファイルが生成されます．
+```
+cd bif
+mkdir build
+cd build
+cmake ../cmake-tree
+make
+./main ../input/<your_input_file>.json
+```
 力学系の写像及びその微分は`sys_func.cpp`に記述し，それ以外のC++ファイルは変更しないでください．
 固定点計算の場合は`T`と`dTdx`の定義のみ，数値微分を用いる場合は`T`, `dTdx`, `dTdlambda`の定義のみでOK．
 なお，`Eigen`配列へのアクセスは`[i]`ではなく`(i)`を用いてください．こっちのほうが早いらしいです．
