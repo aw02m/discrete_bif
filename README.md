@@ -57,6 +57,9 @@ make
 * w : 最新の状態座標及びパラメタをjsonに書き出します．
 * q : プログラムを終了します．
 
+`cmake`で`qcustomplot.h`が見つからないエラーが出たら，`build/main_autogen/ui_mainwindow.h`の`#include"../../qcustomplot.h"`を`#include"qcustomplot.h"`に書き換えてください．
+`CMakeFile.txt`の更新により対応予定.
+
 ## bif概要
 `bif`は分岐点の近似値をもとに分岐集合を計算します．
 本プログラムはPeriod-doubling; I(PD), Tangent; G, Neimark-Sacker; NSの局所分岐計算が可能です．
