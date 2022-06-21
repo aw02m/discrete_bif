@@ -2,7 +2,8 @@
 #define MAINWINDOW_H
 
 #include "dynamical_system.hpp"
-#include "qcustomplot.h" // the header file of QCustomPlot. Don't forget to add it to your project, if you use an IDE, so it gets compiled.
+#include "ui_mainwindow.h"
+#include "qcustomplot.h"
 #include <QMainWindow>
 #include <QTimer>
 
