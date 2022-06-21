@@ -9,7 +9,7 @@ Oct/21/2021 : fixとbifの統合，json出力の自動化，数値微分が一�
 Oct/22/2021 : 二階変分の数値微分が復活，ppをC++(QT+QCustomPlot)に変更  
 Oct/25/2021 : 変分方程式の記述を"CによるカオスCG"形式に変更(構造が`aw02m/autonomous_bif`とほぼ同一化)  
 Nov/11/2021 : NS条件をBialternate Productを用いた形式に変更，虚数の取り扱いが不要のため高速化，なぜかわからんが収束速度が前の虚部分離アルゴリズムよりもかなり早い！G，PDは独立したモードで実装  
-Jun/10/2022 : `bif`のMacOSでのCmakeに対応．`brew`経由で`eigen`と`nlohmann-json`を導入すれば動きます．QtのCmake対応はマダ
+Jun/10/2022 : `bif`のMacOSでのCmakeに対応．`brew`経由で`eigen`と`nlohmann-json`を導入すれば動きます．QtのCmake対応はマダ  
 Jun/21/2022 : `bif`と`pp`の`CMakeFile.txt`とツリー構造を変更．Qmakeを廃止したためすべてのプロジェクトはCmakeでコンパイル可能です．
 
 # descrete_bif
