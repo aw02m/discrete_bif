@@ -1,7 +1,7 @@
 {
     "out_path": "../output/out",
     "json_out_path": "out.json",
-    "mode": 0,
+    "mode": 2,
     "xrange": [
         -3.0,
         3
